@@ -1,5 +1,5 @@
 """
-banker_gui.py  -  Main window + navbar of the Banker's Algorithm Simulator.
+banker_gui.py  -  Main window + navbar of Security D'Lock (Banker's Algorithm Simulator).
 (Start the program by running main.py, not this file.)
 
 Project layout  (inside src/)
@@ -45,17 +45,25 @@ class NavBar(tk.Frame):
     def __init__(self, parent, on_nav):
         super().__init__(parent, bg=BG, height=72)
         self.pack_propagate(False)
+
+        # Left Brand Logo + Title
         logo = tk.Canvas(self, width=52, height=52, bg=BG, highlightthickness=0)
         round_rect(logo, 2, 2, 50, 50, 14, fill=PINK, outline=BLACK, width=2)
-        logo.create_text(26, 26, text="BA", font=F(15, True), fill=WHITE)
+        logo.create_text(26, 26, text="SD", font=F(15, True), fill=WHITE)
         logo.pack(side="left", padx=(18, 10), pady=10)
-        tk.Label(self, text="Banker's Algorithm", font=F(15, True), bg=BG).pack(side="left")
+        tk.Label(self, text="Security D'Lock", font=F(15, True), fg=BLACK, bg=BG).pack(side="left")
+
+        # Centered Navigation Buttons
+        nav_group = tk.Frame(self, bg=BG)
+        nav_group.place(relx=0.52, rely=0.5, anchor="center")
 
         self.buttons = {}
-        for i, (key, label) in enumerate(self.ITEMS):
-            b = RoundButton(self, label, lambda k=key: on_nav(k), width=132, height=46)
-            b.pack(side="left", padx=(40 if i == 0 else 6, 6), pady=13)
+        for key, label in self.ITEMS:
+            b = RoundButton(nav_group, label, lambda k=key: on_nav(k), width=128, height=46)
+            b.pack(side="left", padx=5)
             self.buttons[key] = b
+
+        # Right About (i) Button
         info = RoundButton(self, "i", lambda: on_nav("about"), width=46, height=46,
                            radius=14, font=F(16, True))
         info.pack(side="right", padx=18)
@@ -70,7 +78,7 @@ class NavBar(tk.Frame):
 class App(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title("Banker's Algorithm Simulator")
+        self.title("Security D'Lock — Banker's Algorithm Simulator")
         self.geometry("1240x780")
         self.minsize(1180, 700)
         self.configure(bg=BG)

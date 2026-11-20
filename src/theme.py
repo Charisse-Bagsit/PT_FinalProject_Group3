@@ -1,22 +1,22 @@
 """
-theme.py  -  Colors, fonts and reusable widgets (RoundButton, Card, tables).
-Every page imports from here, so change the look in ONE place.
+theme.py  -  Modern Indigo & Slate color theme, fonts and reusable widgets
+(RoundButton, Card, tables). Every page imports from here, so change the look in ONE place.
 """
 import tkinter as tk
 from tkinter import ttk
 
 
-# ------------------------------------------------------------------ theme
-BG = "#FEE5F3"        # page background (very light pink)
-PINK = "#FB5FC4"      # main pink
-HOT = "#FF45B8"       # buttons / accents
-LIGHT = "#FFB3E0"     # table headers
-SOFT = "#FFEAF6"      # list rows
-WHITE = "#FFFFFF"
-BLACK = "#000000"
-GREEN = "#00BF63"
-RED = "#E8131A"
-MUTED = "#555555"
+# ------------------------------------------------------------------ theme (Modern Indigo & Slate)
+BG = "#F4F6FB"        # page background (soft cool gray-white)
+PINK = "#3730A3"      # primary deep indigo (logo, active tab, highlight cards)
+HOT = "#4F46E5"       # royal indigo accent (section titles, primary action buttons)
+LIGHT = "#E0E7FF"     # soft lavender-blue (table headers, secondary buttons)
+SOFT = "#EEF2FF"      # very light indigo (hover, alternating table rows)
+WHITE = "#FFFFFF"     # cards & inputs
+BLACK = "#1E1B4B"     # dark midnight navy (text & borders)
+GREEN = "#00BF63"     # safe state
+RED = "#E8131A"       # unsafe state
+MUTED = "#475569"     # slate gray subtitles
 FONT = "Segoe UI"     # falls back to the default font if not installed
 
 
@@ -30,17 +30,25 @@ def round_rect(canvas, x1, y1, x2, y2, r, **kw):
     return canvas.create_polygon(pts, smooth=True, **kw)
 
 
+def _auto_fg(fill, fg=None):
+    if fg is not None:
+        return fg
+    return WHITE if fill in (PINK, HOT, GREEN, RED) else BLACK
+
+
 # ------------------------------------------------------------------ widgets
 class RoundButton(tk.Canvas):
     """Rounded button drawn on a canvas (Tk has no rounded buttons)."""
 
     def __init__(self, parent, text, command=None, width=140, height=44, radius=16,
-                 fill=WHITE, fg=BLACK, bg=None, font=None, cursor="hand2"):
+                 fill=WHITE, fg=None, bg=None, font=None, cursor="hand2"):
         super().__init__(parent, width=width, height=height, highlightthickness=0,
                          bg=bg or parent.cget("bg"), cursor=cursor)
         self.text, self.command = text, command
         self.w, self.h, self.r = width, height, radius
-        self.fill, self.cur, self.fg = fill, fill, fg
+        self._custom_fg = fg
+        self.fill, self.cur = fill, fill
+        self.fg = _auto_fg(fill, fg)
         self.font = font or F(11, True)
         self._draw()
         if command:
@@ -58,8 +66,9 @@ class RoundButton(tk.Canvas):
                    fill=self.cur, outline=BLACK, width=2)
         self.create_text(self.w / 2, self.h / 2, text=self.text, fill=self.fg, font=self.font)
 
-    def restyle(self, fill):
+    def restyle(self, fill, fg=None):
         self.fill = self.cur = fill
+        self.fg = _auto_fg(fill, fg if fg is not None else self._custom_fg)
         self._draw()
 
 
