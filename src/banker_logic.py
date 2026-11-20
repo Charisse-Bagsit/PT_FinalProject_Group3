@@ -26,49 +26,49 @@ def leq(a, b):
 
 
 def compute_need(alloc, maxm):
+    """Need = Max - Allocation"""
     return [[m - a for m, a in zip(max_row, alloc_row)]
             for max_row, alloc_row in zip(maxm, alloc)]
 
 
 def compute_available(total, alloc):
+    """Available = Total - column sums of Allocation"""
     used = [sum(col) for col in zip(*alloc)]
     return [t - u for t, u in zip(total, used)]
 
 
 def safety_check(alloc, need, available):
     """
-    Run the safety algorithm.
+    Safety algorithm. Each round scans from P0 and picks the first
+    unfinished process whose Need <= Work.
 
-    Returns a dict:
-        safe        -> True / False
-        sequence    -> list of process indexes (the safe sequence)
-        steps       -> one dict per process that finished:
-                       index, need, alloc, work_before, work_after
-        stuck       -> process indexes that could never finish
-        final_work  -> Work vector at the end
+    Returns a dict: safe, sequence, steps, stuck, final_work.
     """
     n = len(alloc)
     work = list(available)
     finish = [False] * n
-    sequence, steps = [], []
+    sequence = []
+    steps = []
 
-    progress = True
-    while progress:
-        progress = False
+    while True:
+        found = False
         for i in range(n):
             if not finish[i] and leq(need[i], work):
                 before = work[:]
                 work = [w + a for w, a in zip(work, alloc[i])]
                 finish[i] = True
                 sequence.append(i)
-                progress = True
                 steps.append({
-                    "index": i,
+                    "process": i,
                     "need": need[i][:],
-                    "alloc": alloc[i][:],
                     "work_before": before,
+                    "allocation": alloc[i][:],
                     "work_after": work[:],
                 })
+                found = True
+                break
+        if not found:
+            break
 
     stuck = [i for i in range(n) if not finish[i]]
     return {
@@ -108,19 +108,10 @@ def request_resource(pid, request, total, alloc, maxm):
     result = safety_check(new_alloc, new_need, new_avail)
 
     if result["safe"]:
-        seq = " -> ".join(f"P{i}" for i in result["sequence"])
+        seq = ", ".join(f"P{i}" for i in result["sequence"])
         return {"granted": True, "result": result, "new_alloc": new_alloc,
-                "reason": f"GRANTED: the system stays SAFE.\nSafe sequence: {seq}"}
+                "reason": f"Granted: the new state is SAFE. Safe sequence: < {seq} >"}
 
     return {"granted": False, "result": result, "new_alloc": None,
-            "reason": "Denied: granting this request would leave the system in an "
-                      "UNSAFE state, so P%d must wait." % pid}
-
-
-if __name__ == "__main__":
-    need = compute_need(SAMPLE["alloc"], SAMPLE["maxm"])
-    avail = compute_available(SAMPLE["total"], SAMPLE["alloc"])
-    res = safety_check(SAMPLE["alloc"], need, avail)
-    print("Need     :", need)
-    print("Available:", avail)
-    print("Safe?    :", res["safe"], "->", " -> ".join(f"P{i}" for i in res["sequence"]))
+            "reason": f"Denied: granting this request would leave the system in an "
+                      f"UNSAFE state, so P{pid} must wait."}

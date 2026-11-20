@@ -7,10 +7,6 @@ Main File
 
 Banker logic File
     banker_logic.py
-    PT 101 - Platform Technologies | Topic 5: Deadlock Avoidance - Banker's Algorithm
-
-    Main class (the algorithm itself). No GUI, no input()/print().
-
     File structure (imports flow downward):
         vector_utils.py   ->  vector helpers
         banker_models.py  ->  result containers + BankerError
@@ -21,10 +17,8 @@ Banker logic File
     Formulas:
         Need      = Max - Allocation
         Available = Total - (column sums of Allocation)
-        Safety:   Work = Available, Finish[i] = False
-                find unfinished i with Need[i] <= Work; Work += Allocation[i]; repeat
-        Request:  Request <= Need -> Request <= Available -> tentative state
-                -> safety check -> GRANT / WAIT
+        Safety:   Work = Available, Finish[i] = False find unfinished i with Need[i] <= Work; Work += Allocation[i]; repeat
+        Request:  Request <= Need -> Request <= Available -> tentative state -> safety check -> GRANT / WAIT
 
 Banker format File
     banker_format.py
