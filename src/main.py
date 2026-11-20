@@ -1,6 +1,9 @@
-def main():
-    print("Starting the application...")
+"""
+main.py  -  Run this file to start the Banker's Algorithm Simulator.
 
+    python src/main.py
+"""
+from banker_gui import App
 
 if __name__ == "__main__":
-    main()
+    App().mainloop()

@@ -1,0 +1,376 @@
+"""
+pages/simulator.py  -  The actual program: input, Need matrix, safety steps,
+and the Resource Request pop-up.
+"""
+import tkinter as tk
+from tkinter import ttk, messagebox
+
+import banker_logic as banker
+from banker_logic import fmt
+from theme import BG, HOT, LIGHT, WHITE, BLACK, GREEN, RED, MUTED, F, RoundButton, Card, make_tree
+from pages.base import Page
+
+
+# ------------------------------------------------------------------ SIMULATOR
+class SimPage(Page):
+    MAX_P, MAX_R = 6, 4
+
+    def __init__(self, parent, app):
+        super().__init__(parent, app)
+        self.res = None
+        self._revealed = 0
+        self.res_names = []
+        self.total_entries, self.alloc_entries, self.max_entries = [], [], []
+        self.grid_columnconfigure(1, weight=1)
+        self.grid_rowconfigure(1, weight=1)
+
+        # ---- header (like "Item Registry" + "Report Item")
+        head = tk.Frame(self, bg=BG)
+        head.grid(row=0, column=0, columnspan=2, sticky="ew", padx=24, pady=(12, 6))
+        left = tk.Frame(head, bg=BG)
+        left.pack(side="left")
+        tk.Label(left, text="Safety Simulator", font=F(22, True), bg=BG).pack(anchor="w")
+        tk.Label(left, text="Enter the system state, then check if it is safe", font=F(11),
+                 bg=BG).pack(anchor="w")
+        RoundButton(head, "Resource Request", self.open_request, width=170, height=44).pack(side="right")
+        RoundButton(head, "Clear", self.clear, width=90, height=44).pack(side="right", padx=8)
+        RoundButton(head, "+  Load Sample", self.load_sample, width=160, height=44,
+                    fill=HOT).pack(side="right")
+
+        # ---- left card: input
+        lc = Card(self, width=470, height=10)
+        lc.grid(row=1, column=0, sticky="ns", padx=(24, 8), pady=(0, 14))
+        lc.grid_propagate(False)
+        b = lc.body
+        tk.Label(b, text="System Input", font=F(14, True), fg=HOT, bg=WHITE).pack(anchor="w")
+        ctl = tk.Frame(b, bg=WHITE)
+        ctl.pack(anchor="w", pady=6)
+        tk.Label(ctl, text="Processes", font=F(10), bg=WHITE).pack(side="left")
+        self.n_var, self.m_var = tk.IntVar(value=4), tk.IntVar(value=3)
+        tk.Spinbox(ctl, from_=1, to=self.MAX_P, width=3, textvariable=self.n_var,
+                   font=F(11)).pack(side="left", padx=(4, 12))
+        tk.Label(ctl, text="Resources", font=F(10), bg=WHITE).pack(side="left")
+        tk.Spinbox(ctl, from_=1, to=self.MAX_R, width=3, textvariable=self.m_var,
+                   font=F(11)).pack(side="left", padx=(4, 12))
+        RoundButton(ctl, "Build", self.build_clicked, width=80, height=32, radius=12,
+                    fill=LIGHT, font=F(10, True)).pack(side="left")
+        self.total_frame = tk.Frame(b, bg=WHITE)
+        self.total_frame.pack(anchor="w", pady=(6, 2))
+        self.matrix_frame = tk.Frame(b, bg=WHITE)
+        self.matrix_frame.pack(anchor="w", pady=6)
+        btns = tk.Frame(b, bg=WHITE)
+        btns.pack(side="bottom", anchor="w", pady=(6, 0))
+        RoundButton(btns, "Solve", lambda: self.solve(False), width=120, fill=HOT).pack(side="left")
+        RoundButton(btns, "Step-by-Step", lambda: self.solve(True), width=150).pack(side="left", padx=8)
+
+        # ---- right card: output
+        rc = Card(self, width=10, height=10)
+        rc.grid(row=1, column=1, sticky="nsew", padx=(8, 24), pady=(0, 14))
+        rb = rc.body
+        top = tk.Frame(rb, bg=WHITE)
+        top.pack(fill="x")
+        tk.Label(top, text="Need Matrix", font=F(14, True), fg=HOT, bg=WHITE).pack(side="left")
+        self.avail_lbl = tk.Label(top, text="Available: -", font=F(11, True), bg=WHITE)
+        self.avail_lbl.pack(side="right")
+        f1, self.tree1 = make_tree(rb, [("p", "Process", 80, False), ("a", "Allocation", 120, True),
+                                        ("m", "Max", 120, True), ("n", "Need", 120, True),
+                                        ("s", "Status", 130, False)], 6)
+        f1.pack(fill="x", pady=(4, 8))
+        self.banner = tk.Label(rb, text="Press Solve or Step-by-Step to check the system.",
+                               font=F(12, True), bg=LIGHT, pady=9)
+        self.banner.pack(fill="x")
+        top2 = tk.Frame(rb, bg=WHITE)
+        top2.pack(fill="x", pady=(10, 0))
+        tk.Label(top2, text="Safety Check Steps", font=F(14, True), fg=HOT, bg=WHITE).pack(side="left")
+        RoundButton(top2, "Show All", self.reveal_all, width=100, height=34, radius=12,
+                    font=F(10, True)).pack(side="right")
+        RoundButton(top2, "Next Step  ▶", self.reveal_next, width=130, height=34, radius=12,
+                    fill=LIGHT, font=F(10, True)).pack(side="right", padx=6)
+        f2, self.tree2 = make_tree(rb, [("s", "Step", 50, False), ("p", "Process", 70, False),
+                                        ("n", "Need", 100, True), ("w", "Work (before)", 110, True),
+                                        ("c", "Check", 120, True), ("x", "Work + Alloc", 160, True)], 6)
+        f2.pack(fill="both", expand=True, pady=(4, 0))
+
+        self.build(4, 3)
+
+    # ---------------- table building
+    def build_clicked(self):
+        try:
+            n, m = int(self.n_var.get()), int(self.m_var.get())
+        except (tk.TclError, ValueError):
+            return messagebox.showerror("Invalid", "Processes and Resources must be whole numbers.")
+        if not (1 <= n <= self.MAX_P and 1 <= m <= self.MAX_R):
+            return messagebox.showerror("Invalid", f"Use 1-{self.MAX_P} processes and "
+                                                   f"1-{self.MAX_R} resources.")
+        self.build(n, m)
+
+    def _entry(self, parent):
+        e = tk.Entry(parent, width=4, justify="center", font=F(11), relief="flat", bg=WHITE,
+                     highlightthickness=1, highlightbackground=BLACK, highlightcolor=HOT)
+        return e
+
+    def build(self, n, m):
+        for fr in (self.total_frame, self.matrix_frame):
+            for w in fr.winfo_children():
+                w.destroy()
+        self.res_names = list("ABCDEFGH")[:m]
+        self.n_var.set(n)
+        self.m_var.set(m)
+
+        tk.Label(self.total_frame, text="Total", font=F(10, True), bg=WHITE,
+                 width=7, anchor="w").grid(row=0, column=0)
+        self.total_entries = []
+        for j, name in enumerate(self.res_names):
+            tk.Label(self.total_frame, text=name, font=F(9), fg=MUTED, bg=WHITE).grid(row=0, column=j + 1, padx=2)
+            e = self._entry(self.total_frame)
+            e.grid(row=1, column=j + 1, padx=3, pady=2, ipady=3)
+            self.total_entries.append(e)
+
+        mf = self.matrix_frame
+        tk.Label(mf, text="Allocation", font=F(10, True), bg=WHITE).grid(row=0, column=1, columnspan=m)
+        tk.Label(mf, text="Max", font=F(10, True), bg=WHITE).grid(row=0, column=m + 2, columnspan=m)
+        for j, name in enumerate(self.res_names):
+            tk.Label(mf, text=name, font=F(9), fg=MUTED, bg=WHITE).grid(row=1, column=j + 1)
+            tk.Label(mf, text=name, font=F(9), fg=MUTED, bg=WHITE).grid(row=1, column=m + 2 + j)
+        mf.grid_columnconfigure(m + 1, minsize=14)
+        self.alloc_entries, self.max_entries = [], []
+        for i in range(n):
+            tk.Label(mf, text=f"P{i}", font=F(10, True), bg=WHITE, width=7,
+                     anchor="w").grid(row=i + 2, column=0)
+            ar, mr = [], []
+            for j in range(m):
+                a = self._entry(mf)
+                a.grid(row=i + 2, column=j + 1, padx=3, pady=3, ipady=3)
+                x = self._entry(mf)
+                x.grid(row=i + 2, column=m + 2 + j, padx=3, pady=3, ipady=3)
+                ar.append(a)
+                mr.append(x)
+            self.alloc_entries.append(ar)
+            self.max_entries.append(mr)
+        self.reset_output()
+
+    @staticmethod
+    def _put(entry, value):
+        entry.delete(0, "end")
+        entry.insert(0, str(value))
+
+    def load_sample(self):
+        s = banker.SAMPLE
+        n, m = len(s["alloc"]), len(s["total"])
+        self.build(n, m)
+        for j in range(m):
+            self._put(self.total_entries[j], s["total"][j])
+        for i in range(n):
+            for j in range(m):
+                self._put(self.alloc_entries[i][j], s["alloc"][i][j])
+                self._put(self.max_entries[i][j], s["maxm"][i][j])
+
+    def clear(self):
+        self.build(self.n_var.get(), self.m_var.get())
+
+    # ---------------- reading + validating the input
+    def _read(self, entries, label):
+        out = []
+        for i, row in enumerate(entries):
+            vals = []
+            for j, e in enumerate(row):
+                s = e.get().strip()
+                try:
+                    v = int(s)
+                except ValueError:
+                    raise ValueError(f"{label} of P{i}, resource {self.res_names[j]}: "
+                                     f"'{s}' is not a whole number.")
+                if v < 0:
+                    raise ValueError(f"{label} of P{i}, resource {self.res_names[j]} cannot be negative.")
+                vals.append(v)
+            out.append(vals)
+        return out
+
+    def read_inputs(self):
+        try:
+            total = self._read([self.total_entries], "Total")[0]
+            alloc = self._read(self.alloc_entries, "Allocation")
+            maxm = self._read(self.max_entries, "Max")
+            for i in range(len(alloc)):
+                for j in range(len(total)):
+                    if alloc[i][j] > maxm[i][j]:
+                        raise ValueError(f"P{i}: Allocation of {self.res_names[j]} is bigger than its Max.")
+            for j, used in enumerate(sum(col) for col in zip(*alloc)):
+                if used > total[j]:
+                    raise ValueError(f"Resource {self.res_names[j]}: allocated {used} is more than "
+                                     f"the Total {total[j]}.")
+        except ValueError as err:
+            messagebox.showerror("Check your input", str(err))
+            return None
+        return total, alloc, maxm
+
+    # ---------------- solving + showing steps
+    def reset_output(self):
+        self.res = None
+        self._revealed = 0
+        self.tree1.delete(*self.tree1.get_children())
+        self.tree2.delete(*self.tree2.get_children())
+        self.avail_lbl.config(text="Available: -")
+        self.banner.config(text="Press Solve or Step-by-Step to check the system.", bg=LIGHT, fg=BLACK)
+        self.app.data.clear()
+
+    def solve(self, stepwise):
+        data = self.read_inputs()
+        if data is None:
+            return
+        total, alloc, maxm = data
+        need = banker.compute_need(alloc, maxm)
+        avail = banker.compute_available(total, alloc)
+        self.res = banker.safety_check(alloc, need, avail)
+        self.app.data.set(self.res_names[:], total, alloc, maxm, need, avail, self.res)
+
+        self.tree1.delete(*self.tree1.get_children())
+        self.tree2.delete(*self.tree2.get_children())
+        self.rows1 = []
+        for i in range(len(alloc)):
+            self.rows1.append(self.tree1.insert("", "end", values=(
+                f"P{i}", fmt(alloc[i]), fmt(maxm[i]), fmt(need[i]), "Waiting")))
+        self.avail_lbl.config(text="Available: " + fmt(avail))
+        self._revealed = 0
+        if stepwise:
+            self.banner.config(text="Step-by-step mode: press  Next Step ▶", bg=LIGHT, fg=BLACK)
+        else:
+            self.reveal_all()
+
+    def _total_rows(self):
+        return len(self.res["steps"]) + (0 if self.res["safe"] else 1)
+
+    def reveal_next(self):
+        if self.res is None:
+            return messagebox.showinfo("Nothing to show", "Press Solve or Step-by-Step first.")
+        k = self._revealed
+        if k >= self._total_rows():
+            return
+        steps = self.res["steps"]
+        if k < len(steps):
+            s = steps[k]
+            self.tree2.insert("", "end", tags=("ok",), values=(
+                k + 1, f"P{s['index']}", fmt(s["need"]), fmt(s["work_before"]),
+                "Need ≤ Work ✔", fmt(s["work_after"])))
+            self.tree1.item(self.rows1[s["index"]], tags=("ok",))
+            self.tree1.set(self.rows1[s["index"]], "s", "✔ Finished")
+        else:
+            stuck = ", ".join(f"P{i}" for i in self.res["stuck"])
+            self.tree2.insert("", "end", tags=("bad",), values=(
+                "-", "-", "-", fmt(self.res["final_work"]), "Need > Work ✘", "Stuck: " + stuck))
+            for i in self.res["stuck"]:
+                self.tree1.item(self.rows1[i], tags=("bad",))
+                self.tree1.set(self.rows1[i], "s", "✘ Stuck")
+        self._revealed += 1
+        if self._revealed >= self._total_rows():
+            self._final_banner()
+
+    def reveal_all(self):
+        if self.res is None:
+            return messagebox.showinfo("Nothing to show", "Press Solve or Step-by-Step first.")
+        while self._revealed < self._total_rows():
+            self.reveal_next()
+
+    def _final_banner(self):
+        if self.res["safe"]:
+            seq = " → ".join(f"P{i}" for i in self.res["sequence"])
+            self.banner.config(text=f"SAFE      Safe Sequence:  {seq}", bg=GREEN, fg=WHITE)
+        else:
+            stuck = ", ".join(f"P{i}" for i in self.res["stuck"])
+            self.banner.config(text=f"UNSAFE      No safe sequence.  Stuck: {stuck}", bg=RED, fg=WHITE)
+
+    # ---------------- resource request
+    def open_request(self):
+        data = self.read_inputs()
+        if data:
+            RequestDialog(self, *data)
+
+    def apply_request(self, pid, request):
+        for j, r in enumerate(request):
+            cur = int(self.alloc_entries[pid][j].get())
+            self._put(self.alloc_entries[pid][j], cur + r)
+        self.solve(False)
+
+
+class RequestDialog(tk.Toplevel):
+    """Pop-up like the 'Report Lost/Found Items' modal in the wireframe."""
+
+    def __init__(self, sim, total, alloc, maxm):
+        super().__init__(sim.app)
+        self.sim, self.total, self.alloc, self.maxm = sim, total, alloc, maxm
+        self.last = None
+        self.title("Resource Request")
+        self.configure(bg=WHITE, padx=26, pady=18)
+        self.resizable(False, False)
+        self.transient(sim.app)
+
+        tk.Label(self, text="Resource Request", font=F(20, True), fg=HOT, bg=WHITE).pack(anchor="w")
+        tk.Label(self, text="Can this process be given extra resources and still stay safe?",
+                 font=F(10), fg=MUTED, bg=WHITE).pack(anchor="w", pady=(0, 10))
+
+        tk.Label(self, text="Process", font=F(10, True), bg=WHITE).pack(anchor="w")
+        self.proc = ttk.Combobox(self, values=[f"P{i}" for i in range(len(alloc))],
+                                 state="readonly", width=10, font=F(11))
+        self.proc.pack(anchor="w", pady=(2, 4))
+        self.proc.bind("<<ComboboxSelected>>", self.update_hint)
+        self.hint = tk.Label(self, text="", font=F(10), fg=MUTED, bg=WHITE, justify="left")
+        self.hint.pack(anchor="w", pady=(0, 8))
+
+        tk.Label(self, text="Request", font=F(10, True), bg=WHITE).pack(anchor="w")
+        row = tk.Frame(self, bg=WHITE)
+        row.pack(anchor="w", pady=4)
+        self.entries = []
+        for j, name in enumerate(sim.res_names):
+            tk.Label(row, text=name, font=F(10), fg=MUTED, bg=WHITE).grid(row=0, column=j)
+            e = sim._entry(row)
+            e.grid(row=1, column=j, padx=4, ipady=3)
+            e.insert(0, "0")
+            self.entries.append(e)
+
+        self.msg = tk.Label(self, text="", font=F(11, True), bg=WHITE, wraplength=380, justify="left")
+        self.msg.pack(anchor="w", pady=10)
+        bar = tk.Frame(self, bg=WHITE)
+        bar.pack(anchor="w")
+        RoundButton(bar, "Check Request", self.check, width=150, fill=HOT).pack(side="left")
+        self.apply_btn = RoundButton(bar, "Apply to Table", self.apply, width=150, fill=GREEN, fg=WHITE)
+        RoundButton(bar, "Close", self.destroy, width=90).pack(side="right", padx=(8, 0))
+
+        self.update_idletasks()
+        x = sim.app.winfo_x() + (sim.app.winfo_width() - self.winfo_reqwidth()) // 2
+        y = sim.app.winfo_y() + (sim.app.winfo_height() - self.winfo_reqheight()) // 3
+        self.geometry(f"+{max(x, 0)}+{max(y, 0)}")
+        try:
+            self.grab_set()
+        except tk.TclError:
+            pass
+
+    def update_hint(self, _=None):
+        i = self.proc.current()
+        need = banker.compute_need(self.alloc, self.maxm)[i]
+        avail = banker.compute_available(self.total, self.alloc)
+        self.hint.config(text=f"Need: {fmt(need)}     Available: {fmt(avail)}")
+
+    def check(self):
+        pid = self.proc.current()
+        if pid < 0:
+            return self.show("Please choose a process first.", RED)
+        try:
+            req = [int(e.get()) for e in self.entries]
+            if any(r < 0 for r in req):
+                raise ValueError
+        except ValueError:
+            return self.show("Request values must be whole numbers (0 or more).", RED)
+        self.apply_btn.pack_forget()
+        out = banker.request_resource(pid, req, self.total, self.alloc, self.maxm)
+        self.last = (pid, req) if out["granted"] else None
+        self.show(out["reason"].replace(" -> ", " → "), GREEN if out["granted"] else RED)
+        if out["granted"]:
+            self.apply_btn.pack(side="left", padx=8)
+
+    def show(self, text, color):
+        self.msg.config(text=text, fg=color)
+
+    def apply(self):
+        if self.last:
+            self.sim.apply_request(*self.last)
+        self.destroy()
