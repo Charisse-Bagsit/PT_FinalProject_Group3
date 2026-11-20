@@ -11,7 +11,7 @@ Formulas used (same as the Problem 1 solution document):
 SAMPLE = {
     "total": [9, 5, 7],
     "alloc": [[1, 0, 1], [2, 1, 0], [3, 0, 2], [0, 2, 1]],
-    "maxm":  [[4, 2, 2], [3, 2, 2], [6, 1, 3], [2, 3, 2]],
+    "maxm": [[4, 2, 2], [3, 2, 2], [6, 1, 3], [2, 3, 2]],
 }
 
 
@@ -27,8 +27,10 @@ def leq(a, b):
 
 def compute_need(alloc, maxm):
     """Need = Max - Allocation"""
-    return [[m - a for m, a in zip(max_row, alloc_row)]
-            for max_row, alloc_row in zip(maxm, alloc)]
+    return [
+        [m - a for m, a in zip(max_row, alloc_row)]
+        for max_row, alloc_row in zip(maxm, alloc)
+    ]
 
 
 def compute_available(total, alloc):
@@ -58,13 +60,15 @@ def safety_check(alloc, need, available):
                 work = [w + a for w, a in zip(work, alloc[i])]
                 finish[i] = True
                 sequence.append(i)
-                steps.append({
-                    "process": i,
-                    "need": need[i][:],
-                    "work_before": before,
-                    "allocation": alloc[i][:],
-                    "work_after": work[:],
-                })
+                steps.append(
+                    {
+                        "index": i,
+                        "need": need[i][:],
+                        "work_before": before,
+                        "allocation": alloc[i][:],
+                        "work_after": work[:],
+                    }
+                )
                 found = True
                 break
         if not found:
@@ -91,14 +95,22 @@ def request_resource(pid, request, total, alloc, maxm):
     available = compute_available(total, alloc)
 
     if not leq(request, need[pid]):
-        return {"granted": False, "result": None, "new_alloc": None,
-                "reason": f"Denied: P{pid} asked for more than its remaining Need "
-                          f"{fmt(need[pid])}. It exceeded its maximum claim."}
+        return {
+            "granted": False,
+            "result": None,
+            "new_alloc": None,
+            "reason": f"Denied: P{pid} asked for more than its remaining Need "
+            f"{fmt(need[pid])}. It exceeded its maximum claim.",
+        }
 
     if not leq(request, available):
-        return {"granted": False, "result": None, "new_alloc": None,
-                "reason": f"P{pid} must WAIT: the request {fmt(request)} is more than "
-                          f"the Available resources {fmt(available)}."}
+        return {
+            "granted": False,
+            "result": None,
+            "new_alloc": None,
+            "reason": f"P{pid} must WAIT: the request {fmt(request)} is more than "
+            f"the Available resources {fmt(available)}.",
+        }
 
     # Pretend to give the resources, then run the safety check.
     new_alloc = [row[:] for row in alloc]
@@ -109,9 +121,17 @@ def request_resource(pid, request, total, alloc, maxm):
 
     if result["safe"]:
         seq = ", ".join(f"P{i}" for i in result["sequence"])
-        return {"granted": True, "result": result, "new_alloc": new_alloc,
-                "reason": f"Granted: the new state is SAFE. Safe sequence: < {seq} >"}
+        return {
+            "granted": True,
+            "result": result,
+            "new_alloc": new_alloc,
+            "reason": f"Granted: the new state is SAFE. Safe sequence: < {seq} >",
+        }
 
-    return {"granted": False, "result": result, "new_alloc": None,
-            "reason": f"Denied: granting this request would leave the system in an "
-                      f"UNSAFE state, so P{pid} must wait."}
+    return {
+        "granted": False,
+        "result": result,
+        "new_alloc": None,
+        "reason": f"Denied: granting this request would leave the system in an "
+        f"UNSAFE state, so P{pid} must wait.",
+    }
