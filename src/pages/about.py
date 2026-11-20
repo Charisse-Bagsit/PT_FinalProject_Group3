@@ -6,7 +6,7 @@ from theme import BG, PINK, WHITE, BLACK, F, info_card
 from pages.base import Page
 
 
-TEAM = ["Member 1", "Member 2", "Member 3", "Member 4"]   # <- put your names here
+TEAM = ["Charisse Bagsit", "Erikka Stephanie Dela Roca", "John Carlo Plantilla", "Princess Khaila Robines", "Joshua Servando"]   # <- put your names here
 
 
 # ------------------------------------------------------------------ ABOUT

@@ -24,7 +24,7 @@ class SimPage(Page):
         self.grid_columnconfigure(1, weight=1)
         self.grid_rowconfigure(1, weight=1)
 
-        # ---- header (like "Item Registry" + "Report Item")
+        # ---- header
         head = tk.Frame(self, bg=BG)
         head.grid(row=0, column=0, columnspan=2, sticky="ew", padx=24, pady=(12, 6))
         left = tk.Frame(head, bg=BG)
@@ -37,31 +37,38 @@ class SimPage(Page):
         RoundButton(head, "+  Load Sample", self.load_sample, width=160, height=44,
                     fill=HOT).pack(side="right")
 
-        # ---- left card: input
-        lc = Card(self, width=470, height=10)
+        # ---- left card: input (maximized layout)
+        lc = Card(self, width=490, height=10)
         lc.grid(row=1, column=0, sticky="ns", padx=(24, 8), pady=(0, 14))
         lc.grid_propagate(False)
         b = lc.body
-        tk.Label(b, text="System Input", font=F(14, True), fg=HOT, bg=WHITE).pack(anchor="w")
+
+        tk.Label(b, text="System Input", font=F(16, True), fg=HOT, bg=WHITE).pack(anchor="w", pady=(0, 4))
+
         ctl = tk.Frame(b, bg=WHITE)
-        ctl.pack(anchor="w", pady=6)
-        tk.Label(ctl, text="Processes", font=F(10), bg=WHITE).pack(side="left")
+        ctl.pack(fill="x", pady=(4, 10))
+        tk.Label(ctl, text="Processes", font=F(11, True), bg=WHITE).pack(side="left")
         self.n_var, self.m_var = tk.IntVar(value=4), tk.IntVar(value=3)
-        tk.Spinbox(ctl, from_=1, to=self.MAX_P, width=3, textvariable=self.n_var,
-                   font=F(11)).pack(side="left", padx=(4, 12))
-        tk.Label(ctl, text="Resources", font=F(10), bg=WHITE).pack(side="left")
-        tk.Spinbox(ctl, from_=1, to=self.MAX_R, width=3, textvariable=self.m_var,
-                   font=F(11)).pack(side="left", padx=(4, 12))
-        RoundButton(ctl, "Build", self.build_clicked, width=80, height=32, radius=12,
-                    fill=LIGHT, font=F(10, True)).pack(side="left")
+        tk.Spinbox(ctl, from_=1, to=self.MAX_P, width=4, textvariable=self.n_var,
+                   font=F(12), justify="center").pack(side="left", padx=(6, 16), ipady=3)
+        tk.Label(ctl, text="Resources", font=F(11, True), bg=WHITE).pack(side="left")
+        tk.Spinbox(ctl, from_=1, to=self.MAX_R, width=4, textvariable=self.m_var,
+                   font=F(12), justify="center").pack(side="left", padx=(6, 14), ipady=3)
+        RoundButton(ctl, "Build", self.build_clicked, width=105, height=38, radius=14,
+                    fill=LIGHT, font=F(11, True)).pack(side="right")
+
         self.total_frame = tk.Frame(b, bg=WHITE)
-        self.total_frame.pack(anchor="w", pady=(6, 2))
+        self.total_frame.pack(fill="x", pady=(6, 8))
+
         self.matrix_frame = tk.Frame(b, bg=WHITE)
-        self.matrix_frame.pack(anchor="w", pady=6)
+        self.matrix_frame.pack(fill="both", expand=True, pady=(4, 8))
+
         btns = tk.Frame(b, bg=WHITE)
-        btns.pack(side="bottom", anchor="w", pady=(6, 0))
-        RoundButton(btns, "Solve", lambda: self.solve(False), width=120, fill=HOT).pack(side="left")
-        RoundButton(btns, "Step-by-Step", lambda: self.solve(True), width=150).pack(side="left", padx=8)
+        btns.pack(side="bottom", fill="x", pady=(8, 0))
+        RoundButton(btns, "Solve", lambda: self.solve(False), width=215, height=48,
+                    font=F(12, True), fill=HOT).pack(side="left")
+        RoundButton(btns, "Step-by-Step", lambda: self.solve(True), width=215, height=48,
+                    font=F(12, True)).pack(side="right")
 
         # ---- right card: output
         rc = Card(self, width=10, height=10)
@@ -76,20 +83,28 @@ class SimPage(Page):
                                         ("m", "Max", 120, True), ("n", "Need", 120, True),
                                         ("s", "Status", 130, False)], 6)
         f1.pack(fill="x", pady=(4, 8))
-        self.banner = tk.Label(rb, text="Press Solve or Step-by-Step to check the system.",
-                               font=F(12, True), bg=LIGHT, pady=9)
-        self.banner.pack(fill="x")
+
         top2 = tk.Frame(rb, bg=WHITE)
-        top2.pack(fill="x", pady=(10, 0))
+        top2.pack(fill="x", pady=(6, 0))
         tk.Label(top2, text="Safety Check Steps", font=F(14, True), fg=HOT, bg=WHITE).pack(side="left")
         RoundButton(top2, "Show All", self.reveal_all, width=100, height=34, radius=12,
                     font=F(10, True)).pack(side="right")
         RoundButton(top2, "Next Step  ▶", self.reveal_next, width=130, height=34, radius=12,
                     fill=LIGHT, font=F(10, True)).pack(side="right", padx=6)
-        f2, self.tree2 = make_tree(rb, [("s", "Step", 50, False), ("p", "Process", 70, False),
-                                        ("n", "Need", 100, True), ("w", "Work (before)", 110, True),
-                                        ("c", "Check", 120, True), ("x", "Work + Alloc", 160, True)], 6)
-        f2.pack(fill="both", expand=True, pady=(4, 0))
+
+        f2, self.tree2 = make_tree(rb, [
+            ("iter", "Iteration", 75, False),
+            ("wb", "Work Before", 110, True),
+            ("proc", "Process Selected", 120, True),
+            ("chk", "Check", 115, True),
+            ("rel", "Allocation Released", 130, True),
+            ("wa", "Work After", 110, True),
+        ], 6)
+        f2.pack(fill="both", expand=True, pady=(4, 8))
+
+        self.banner = tk.Label(rb, text="Press Solve or Step-by-Step to check the system.",
+                               font=F(12, True), bg=LIGHT, pady=9)
+        self.banner.pack(fill="x")
 
         self.build(4, 3)
 
@@ -104,8 +119,8 @@ class SimPage(Page):
                                                    f"1-{self.MAX_R} resources.")
         self.build(n, m)
 
-    def _entry(self, parent):
-        e = tk.Entry(parent, width=4, justify="center", font=F(11), relief="flat", bg=WHITE,
+    def _entry(self, parent, width=5, font_size=12):
+        e = tk.Entry(parent, width=width, justify="center", font=F(font_size), relief="flat", bg=WHITE,
                      highlightthickness=1, highlightbackground=BLACK, highlightcolor=HOT)
         return e
 
@@ -117,32 +132,50 @@ class SimPage(Page):
         self.n_var.set(n)
         self.m_var.set(m)
 
-        tk.Label(self.total_frame, text="Total", font=F(10, True), bg=WHITE,
-                 width=7, anchor="w").grid(row=0, column=0)
+        # ---- Total row
+        tf = self.total_frame
+        tk.Label(tf, text="Total", font=F(11, True), bg=WHITE,
+                 width=6, anchor="w").grid(row=0, column=0, rowspan=2, sticky="w")
         self.total_entries = []
         for j, name in enumerate(self.res_names):
-            tk.Label(self.total_frame, text=name, font=F(9), fg=MUTED, bg=WHITE).grid(row=0, column=j + 1, padx=2)
-            e = self._entry(self.total_frame)
-            e.grid(row=1, column=j + 1, padx=3, pady=2, ipady=3)
+            tf.grid_columnconfigure(j + 1, weight=1)
+            tk.Label(tf, text=name, font=F(10, True), fg=MUTED, bg=WHITE).grid(row=0, column=j + 1, pady=(0, 2))
+            e = self._entry(tf, width=6, font_size=12)
+            e.grid(row=1, column=j + 1, padx=4, pady=2, ipady=6, sticky="ew")
             self.total_entries.append(e)
 
+        # ---- Allocation & Max matrices
         mf = self.matrix_frame
-        tk.Label(mf, text="Allocation", font=F(10, True), bg=WHITE).grid(row=0, column=1, columnspan=m)
-        tk.Label(mf, text="Max", font=F(10, True), bg=WHITE).grid(row=0, column=m + 2, columnspan=m)
+        mf.grid_columnconfigure(0, minsize=52)
+        for j in range(m):
+            mf.grid_columnconfigure(j + 1, weight=1)
+            mf.grid_columnconfigure(m + 2 + j, weight=1)
+        mf.grid_columnconfigure(m + 1, minsize=18)
+
+        tk.Label(mf, text="Allocation", font=F(11, True), bg=WHITE).grid(
+            row=0, column=1, columnspan=m, pady=(2, 2))
+        tk.Label(mf, text="Max", font=F(11, True), bg=WHITE).grid(
+            row=0, column=m + 2, columnspan=m, pady=(2, 2))
+
         for j, name in enumerate(self.res_names):
-            tk.Label(mf, text=name, font=F(9), fg=MUTED, bg=WHITE).grid(row=1, column=j + 1)
-            tk.Label(mf, text=name, font=F(9), fg=MUTED, bg=WHITE).grid(row=1, column=m + 2 + j)
-        mf.grid_columnconfigure(m + 1, minsize=14)
+            tk.Label(mf, text=name, font=F(10, True), fg=MUTED, bg=WHITE).grid(row=1, column=j + 1, pady=(0, 4))
+            tk.Label(mf, text=name, font=F(10, True), fg=MUTED, bg=WHITE).grid(row=1, column=m + 2 + j, pady=(0, 4))
+
+        pad_y = 6 if n <= 4 else 4
+        ipad_y = 6 if n <= 4 else 4
+        box_w = 5 if m <= 3 else 4
+
         self.alloc_entries, self.max_entries = [], []
         for i in range(n):
-            tk.Label(mf, text=f"P{i}", font=F(10, True), bg=WHITE, width=7,
-                     anchor="w").grid(row=i + 2, column=0)
+            mf.grid_rowconfigure(i + 2, weight=1)
+            tk.Label(mf, text=f"P{i}", font=F(11, True), bg=WHITE,
+                     anchor="w").grid(row=i + 2, column=0, sticky="w")
             ar, mr = [], []
             for j in range(m):
-                a = self._entry(mf)
-                a.grid(row=i + 2, column=j + 1, padx=3, pady=3, ipady=3)
-                x = self._entry(mf)
-                x.grid(row=i + 2, column=m + 2 + j, padx=3, pady=3, ipady=3)
+                a = self._entry(mf, width=box_w, font_size=12)
+                a.grid(row=i + 2, column=j + 1, padx=3, pady=pad_y, ipady=ipad_y, sticky="ew")
+                x = self._entry(mf, width=box_w, font_size=12)
+                x.grid(row=i + 2, column=m + 2 + j, padx=3, pady=pad_y, ipady=ipad_y, sticky="ew")
                 ar.append(a)
                 mr.append(x)
             self.alloc_entries.append(ar)
@@ -231,6 +264,9 @@ class SimPage(Page):
             self.rows1.append(self.tree1.insert("", "end", values=(
                 f"P{i}", fmt(alloc[i]), fmt(maxm[i]), fmt(need[i]), "Waiting")))
         self.avail_lbl.config(text="Available: " + fmt(avail))
+        self.tree2.insert("", "end", values=(
+            "Initial", fmt(avail), "—", "—", "—", fmt(avail)
+        ))
         self._revealed = 0
         if stepwise:
             self.banner.config(text="Step-by-step mode: press  Next Step ▶", bg=LIGHT, fg=BLACK)
@@ -250,14 +286,25 @@ class SimPage(Page):
         if k < len(steps):
             s = steps[k]
             self.tree2.insert("", "end", tags=("ok",), values=(
-                k + 1, f"P{s['index']}", fmt(s["need"]), fmt(s["work_before"]),
-                "Need ≤ Work ✔", fmt(s["work_after"])))
+                k + 1,
+                fmt(s["work_before"]),
+                f"P{s['index']}",
+                "Need ≤ Work ✔",
+                fmt(s["allocation"]),
+                fmt(s["work_after"]),
+            ))
             self.tree1.item(self.rows1[s["index"]], tags=("ok",))
             self.tree1.set(self.rows1[s["index"]], "s", "✔ Finished")
         else:
             stuck = ", ".join(f"P{i}" for i in self.res["stuck"])
             self.tree2.insert("", "end", tags=("bad",), values=(
-                "-", "-", "-", fmt(self.res["final_work"]), "Need > Work ✘", "Stuck: " + stuck))
+                "-",
+                fmt(self.res["final_work"]),
+                "Stuck: " + stuck,
+                "Need > Work ✘",
+                "—",
+                fmt(self.res["final_work"]),
+            ))
             for i in self.res["stuck"]:
                 self.tree1.item(self.rows1[i], tags=("bad",))
                 self.tree1.set(self.rows1[i], "s", "✘ Stuck")
@@ -322,8 +369,8 @@ class RequestDialog(tk.Toplevel):
         self.entries = []
         for j, name in enumerate(sim.res_names):
             tk.Label(row, text=name, font=F(10), fg=MUTED, bg=WHITE).grid(row=0, column=j)
-            e = sim._entry(row)
-            e.grid(row=1, column=j, padx=4, ipady=3)
+            e = sim._entry(row, width=5, font_size=11)
+            e.grid(row=1, column=j, padx=4, ipady=4)
             e.insert(0, "0")
             self.entries.append(e)
 
