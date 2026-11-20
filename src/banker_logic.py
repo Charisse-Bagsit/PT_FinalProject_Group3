@@ -10,7 +10,7 @@ from banker_models import (
     SafetyStep,
 )
 
-# re-exported so the GUI can do:  from banker_logic import BankersAlgorithm, BankerError
+# re-exported so the GUI can do: from banker_logic import BankersAlgorithm, BankerError
 __all__ = [
     "BankersAlgorithm",
     "BankerError",
@@ -89,34 +89,33 @@ class BankersAlgorithm:
                 f"Total allocated {fmt_vec(self.total_allocated)} exceeds Total {fmt_vec(self.total)}."
             )
 
-    # ---------------- derived values ----------------
+    # derived values
     @property
     def need(self) -> Matrix:
-        """Need = Max - Allocation."""
+        # Need = Max - Allocation.
         return [vec_sub(self.max_claim[i], self.allocation[i]) for i in range(self.n)]
 
     @property
     def total_allocated(self) -> Vector:
-        """Column sums of Allocation."""
+        # Column sums of Allocation.
         return [
             sum(self.allocation[i][j] for i in range(self.n)) for j in range(self.m)
         ]
 
     @property
     def available(self):
-        """Available = Total - column sums of Allocation."""
+        # Available = Total - column sums of Allocation.
         return vec_sub(self.total, self.total_allocated)
 
-    # ---------------- safety algorithm ----------------
+    # safety algorithm
     def safety_check(
         self,
         available: Optional[Sequence[int]] = None,
         allocation: Optional[Matrix] = None,
         need: Optional[Matrix] = None,
-    ) -> SafetyResult:
+    ):
         """
-        Run the safety algorithm on the current state (no arguments) or on a
-        tentative state (used by request_resources). Each iteration scans from
+        Run the safety algorithm on the current state or on a tentative state. Each iteration scans from
         process index 0 and picks the first unfinished one with Need <= Work.
         """
         alloc = allocation if allocation is not None else self.allocation
@@ -186,13 +185,11 @@ class BankersAlgorithm:
             is_safe, sequence, steps, initial_work, list(finish), unfinished
         )
 
-    # ---------------- resource request ----------------
-    def request_resources(
-        self, process, request: Sequence[int], apply: bool = False
-    ) -> RequestResult:
+    # resource request
+    def request_resources(self, process, request: Sequence[int], apply: bool = False):
         """
-        Resource-request algorithm. `process` may be an index or a name.
-        If apply=True and the request is GRANTED, the state is updated.
+        PagResource-request algorithm. `process` may be an index or a name.
+        At If apply=True then request is GRANTED, the state is updated.
         """
         i = self.process_index(process)
         pname = self.process_names[i]
@@ -205,7 +202,7 @@ class BankersAlgorithm:
 
         need_i = self.need[i]
 
-        # Step 1: Request <= Need ?
+        # Request <= Need
         if not vec_leq(req, need_i):
             return RequestResult(
                 pname,
@@ -217,7 +214,7 @@ class BankersAlgorithm:
                 f"{pname} exceeded its maximum claim.",
             )
 
-        # Step 2: Request <= Available ?
+        # Request <= Available
         avail = self.available
         if not vec_leq(req, avail):
             return RequestResult(
@@ -230,7 +227,7 @@ class BankersAlgorithm:
                 f"{pname} must wait.",
             )
 
-        # Step 3: tentative allocation
+        # tentative allocation
         t_avail = vec_sub(avail, req)
         t_alloc_i = vec_add(self.allocation[i], req)
         t_need_i = vec_sub(need_i, req)
@@ -240,7 +237,7 @@ class BankersAlgorithm:
         t_need = deepcopy(self.need)
         t_need[i] = t_need_i
 
-        # Step 4: safety check on the tentative state
+        # safety check on the tentative state
         safety = self.safety_check(available=t_avail, allocation=t_alloc, need=t_need)
 
         if safety.is_safe:
@@ -273,7 +270,7 @@ class BankersAlgorithm:
         )
 
     def process_index(self, process):
-        """Accepts an index (int) or a process name (str)."""
+        # accepts an index (int) or a process name (str).
         if isinstance(process, int):
             if 0 <= process < self.n:
                 return process

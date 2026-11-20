@@ -3,7 +3,7 @@ from banker_models import RequestResult, SafetyResult
 from vector_utils import fmt_vec
 
 
-def format_state(b: BankersAlgorithm) -> str:
+def format_state(b: BankersAlgorithm):
     cols = "  ".join(f"{r:>3}" for r in b.resource_names)
     lines = [
         f"Total     : {fmt_vec(b.total)}",
