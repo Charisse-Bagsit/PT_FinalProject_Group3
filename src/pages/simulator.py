@@ -1,5 +1,5 @@
 """
-pages/simulator.py  -  The actual program: input, Need matrix, safety steps,
+pages/simulator.py  -  The actual program: input, Need matrix (with Finish array), safety steps,
 and the Resource Request pop-up.
 """
 import tkinter as tk
@@ -76,12 +76,18 @@ class SimPage(Page):
         rb = rc.body
         top = tk.Frame(rb, bg=WHITE)
         top.pack(fill="x")
-        tk.Label(top, text="Need Matrix", font=F(14, True), fg=HOT, bg=WHITE).pack(side="left")
+        tk.Label(top, text="Need Matrix & Finish Status", font=F(14, True), fg=HOT, bg=WHITE).pack(side="left")
         self.avail_lbl = tk.Label(top, text="Available: -", font=F(11, True), bg=WHITE)
         self.avail_lbl.pack(side="right")
-        f1, self.tree1 = make_tree(rb, [("p", "Process", 80, False), ("a", "Allocation", 120, True),
-                                        ("m", "Max", 120, True), ("n", "Need", 120, True),
-                                        ("s", "Status", 130, False)], 6)
+
+        # Finish column (False initially -> True when completed, matching class discussion)
+        f1, self.tree1 = make_tree(rb, [
+            ("p", "Process", 80, False),
+            ("a", "Allocation", 120, True),
+            ("m", "Max", 120, True),
+            ("n", "Need", 120, True),
+            ("f", "Finish", 110, False),
+        ], 6)
         f1.pack(fill="x", pady=(4, 8))
 
         top2 = tk.Frame(rb, bg=WHITE)
@@ -93,12 +99,11 @@ class SimPage(Page):
                     fill=LIGHT, font=F(10, True)).pack(side="right", padx=6)
 
         f2, self.tree2 = make_tree(rb, [
-            ("iter", "Iteration", 75, False),
-            ("wb", "Work Before", 110, True),
-            ("proc", "Process Selected", 120, True),
-            ("chk", "Check", 115, True),
-            ("rel", "Allocation Released", 130, True),
-            ("wa", "Work After", 110, True),
+            ("iter", "Iteration", 90, False),
+            ("wb", "Work Before", 130, True),
+            ("proc", "Process Selected", 145, True),
+            ("rel", "Allocation Released", 155, True),
+            ("wa", "Work After", 130, True),
         ], 6)
         f2.pack(fill="both", expand=True, pady=(4, 8))
 
@@ -260,16 +265,17 @@ class SimPage(Page):
         self.tree1.delete(*self.tree1.get_children())
         self.tree2.delete(*self.tree2.get_children())
         self.rows1 = []
+        # Initially: Finish = False for all processes
         for i in range(len(alloc)):
             self.rows1.append(self.tree1.insert("", "end", values=(
-                f"P{i}", fmt(alloc[i]), fmt(maxm[i]), fmt(need[i]), "Waiting")))
+                f"P{i}", fmt(alloc[i]), fmt(maxm[i]), fmt(need[i]), "False")))
         self.avail_lbl.config(text="Available: " + fmt(avail))
         self.tree2.insert("", "end", values=(
-            "Initial", fmt(avail), "—", "—", "—", fmt(avail)
+            "Initial", fmt(avail), "—", "—", fmt(avail)
         ))
         self._revealed = 0
         if stepwise:
-            self.banner.config(text="Step-by-step mode: press  Next Step ▶", bg=LIGHT, fg=BLACK)
+            self.banner.config(text="Step-by-step mode (Initially Finish = False): press  Next Step ▶", bg=LIGHT, fg=BLACK)
         else:
             self.reveal_all()
 
@@ -289,25 +295,24 @@ class SimPage(Page):
                 k + 1,
                 fmt(s["work_before"]),
                 f"P{s['index']}",
-                "Need ≤ Work ✔",
                 fmt(s["allocation"]),
                 fmt(s["work_after"]),
             ))
+            # Update Finish from False -> True
             self.tree1.item(self.rows1[s["index"]], tags=("ok",))
-            self.tree1.set(self.rows1[s["index"]], "s", "✔ Finished")
+            self.tree1.set(self.rows1[s["index"]], "f", "True")
         else:
             stuck = ", ".join(f"P{i}" for i in self.res["stuck"])
             self.tree2.insert("", "end", tags=("bad",), values=(
                 "-",
                 fmt(self.res["final_work"]),
                 "Stuck: " + stuck,
-                "Need > Work ✘",
                 "—",
                 fmt(self.res["final_work"]),
             ))
             for i in self.res["stuck"]:
                 self.tree1.item(self.rows1[i], tags=("bad",))
-                self.tree1.set(self.rows1[i], "s", "✘ Stuck")
+                self.tree1.set(self.rows1[i], "f", "False")
         self._revealed += 1
         if self._revealed >= self._total_rows():
             self._final_banner()
@@ -321,10 +326,10 @@ class SimPage(Page):
     def _final_banner(self):
         if self.res["safe"]:
             seq = " → ".join(f"P{i}" for i in self.res["sequence"])
-            self.banner.config(text=f"SAFE      Safe Sequence:  {seq}", bg=GREEN, fg=WHITE)
+            self.banner.config(text=f"SAFE STATE (All Finish = True)    Safe Sequence:  {seq}", bg=GREEN, fg=WHITE)
         else:
             stuck = ", ".join(f"P{i}" for i in self.res["stuck"])
-            self.banner.config(text=f"UNSAFE      No safe sequence.  Stuck: {stuck}", bg=RED, fg=WHITE)
+            self.banner.config(text=f"UNSAFE STATE (Some Finish = False)    Stuck: {stuck}", bg=RED, fg=WHITE)
 
     # ---------------- resource request
     def open_request(self):

@@ -24,10 +24,33 @@ def F(size=11, bold=False):
     return (FONT, size, "bold") if bold else (FONT, size)
 
 
-def round_rect(canvas, x1, y1, x2, y2, r, **kw):
-    pts = [x1 + r, y1, x2 - r, y1, x2, y1, x2, y1 + r, x2, y2 - r, x2, y2,
-           x2 - r, y2, x1 + r, y2, x1, y2, x1, y2 - r, x1, y1 + r, x1, y1]
-    return canvas.create_polygon(pts, smooth=True, **kw)
+def round_rect(canvas, x1, y1, x2, y2, r=16, **kw):
+    w = abs(x2 - x1)
+    h = abs(y2 - y1)
+    r = max(2, min(r, w / 2.2, h / 2.2))
+    pts = [
+        x1 + r, y1,
+        x1 + r, y1,
+        x2 - r, y1,
+        x2 - r, y1,
+        x2, y1,
+        x2, y1 + r,
+        x2, y1 + r,
+        x2, y2 - r,
+        x2, y2 - r,
+        x2, y2,
+        x2 - r, y2,
+        x2 - r, y2,
+        x1 + r, y2,
+        x1 + r, y2,
+        x1, y2,
+        x1, y2 - r,
+        x1, y2 - r,
+        x1, y1 + r,
+        x1, y1 + r,
+        x1, y1,
+    ]
+    return canvas.create_polygon(pts, smooth=True, splinesteps=36, **kw)
 
 
 def _auto_fg(fill, fg=None):
