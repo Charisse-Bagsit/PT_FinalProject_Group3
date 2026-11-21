@@ -125,16 +125,30 @@ def info_card(parent, title, text, fill=WHITE, title_fg=HOT, text_fg=MUTED, heig
 
 
 def make_tree(parent, columns, height):
-    """columns = [(key, title, width, stretch), ...]  ->  (frame, tree)"""
+    """columns = [(key, title, width, stretch), ...]  ->  (frame, tree)
+    A vertical scrollbar shows up by itself only when there are more rows than fit."""
     frame = tk.Frame(parent, bg=parent.cget("bg"))
+    frame.grid_columnconfigure(0, weight=1)
+    frame.grid_rowconfigure(0, weight=1)
     tree = ttk.Treeview(frame, columns=[c[0] for c in columns], show="headings",
                         height=height, selectmode="none")
+    sb = ttk.Scrollbar(frame, orient="vertical", command=tree.yview)
+
+    def _set(first, last):
+        sb.set(first, last)
+        if float(first) <= 0.0 and float(last) >= 1.0:
+            sb.grid_remove()
+        else:
+            sb.grid()
+
+    tree.configure(yscrollcommand=_set)
     for key, title, width, stretch in columns:
         tree.heading(key, text=title)
         tree.column(key, width=width, anchor="center", stretch=stretch)
     tree.tag_configure("ok", background="#D9F7E6")
     tree.tag_configure("bad", background="#FFD6D6")
-    tree.pack(fill="both", expand=True)
+    tree.grid(row=0, column=0, sticky="nsew")
+    sb.grid(row=0, column=1, sticky="ns")
     return frame, tree
 
 

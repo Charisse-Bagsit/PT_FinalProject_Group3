@@ -57,18 +57,38 @@ class SimPage(Page):
         RoundButton(ctl, "Build", self.build_clicked, width=105, height=38, radius=14,
                     fill=LIGHT, font=F(11, True)).pack(side="right")
 
-        self.total_frame = tk.Frame(b, bg=WHITE)
-        self.total_frame.pack(fill="x", pady=(6, 8))
-
-        self.matrix_frame = tk.Frame(b, bg=WHITE)
-        self.matrix_frame.pack(fill="both", expand=True, pady=(4, 8))
-
+        # buttons first (stay visible at the bottom), then the scrollable input area
         btns = tk.Frame(b, bg=WHITE)
         btns.pack(side="bottom", fill="x", pady=(8, 0))
         RoundButton(btns, "Solve", lambda: self.solve(False), width=215, height=48,
                     font=F(12, True), fill=HOT).pack(side="left")
         RoundButton(btns, "Step-by-Step", lambda: self.solve(True), width=215, height=48,
                     font=F(12, True)).pack(side="right")
+
+        # ---- scrollable area: Total + Allocation + Max (scrolls when many processes/resources)
+        self._scroll_wrap = tk.Frame(b, bg=WHITE)
+        self._scroll_wrap.pack(fill="both", expand=True)
+        self._scroll_wrap.grid_columnconfigure(0, weight=1)
+        self._scroll_wrap.grid_rowconfigure(0, weight=1)
+        self._in_canvas = tk.Canvas(self._scroll_wrap, bg=WHITE, highlightthickness=0, height=120)
+        self._vsb = ttk.Scrollbar(self._scroll_wrap, orient="vertical", command=self._in_canvas.yview)
+        self._hsb = ttk.Scrollbar(self._scroll_wrap, orient="horizontal", command=self._in_canvas.xview)
+        self._in_canvas.configure(yscrollcommand=self._vsb.set, xscrollcommand=self._hsb.set)
+        self._in_canvas.grid(row=0, column=0, sticky="nsew")
+        self._vsb.grid(row=0, column=1, sticky="ns")
+        self._hsb.grid(row=1, column=0, sticky="ew")
+        self._vsb.grid_remove()
+        self._hsb.grid_remove()
+        self._inner = tk.Frame(self._in_canvas, bg=WHITE)
+        self._in_win = self._in_canvas.create_window(0, 0, window=self._inner, anchor="nw")
+        self._inner.bind("<Configure>", self._fit_inner)
+        self._in_canvas.bind("<Configure>", self._fit_inner)
+        self.bind_all("<MouseWheel>", self._on_wheel, add="+")
+
+        self.total_frame = tk.Frame(self._inner, bg=WHITE)
+        self.total_frame.pack(fill="x", pady=(6, 8))
+        self.matrix_frame = tk.Frame(self._inner, bg=WHITE)
+        self.matrix_frame.pack(fill="both", expand=True, pady=(4, 8))
 
         # ---- right card: output
         rc = Card(self, width=10, height=10)
@@ -80,6 +100,8 @@ class SimPage(Page):
         # CHANGED: Available label 11 -> 13 (bigger, easier to read)
         self.avail_lbl = tk.Label(top, text="Available: -", font=F(13, True), bg=WHITE)
         self.avail_lbl.pack(side="right")
+        tk.Label(rb, text="Need = Max − Allocation     |     Available = Total Resources − Sum of Allocation",
+                 font=F(10), fg=MUTED, bg=WHITE).pack(anchor="w")
 
         # Finish column (False initially -> True when completed, matching class discussion)
         f1, self.tree1 = make_tree(rb, [
@@ -91,6 +113,11 @@ class SimPage(Page):
         ], 6)
         f1.pack(fill="x", pady=(4, 8))
 
+        # banner is packed BEFORE the steps table so it always stays visible at the bottom
+        self.banner = tk.Label(rb, text="Press Solve or Step-by-Step to check the system.",
+                               font=F(12, True), bg=LIGHT, pady=9)
+        self.banner.pack(side="bottom", fill="x")
+
         top2 = tk.Frame(rb, bg=WHITE)
         top2.pack(fill="x", pady=(6, 0))
         tk.Label(top2, text="Safety Check Steps", font=F(14, True), fg=HOT, bg=WHITE).pack(side="left")
@@ -98,6 +125,8 @@ class SimPage(Page):
                     font=F(10, True)).pack(side="right")
         RoundButton(top2, "Next Step  ▶", self.reveal_next, width=130, height=34, radius=12,
                     fill=LIGHT, font=F(10, True)).pack(side="right", padx=6)
+        tk.Label(rb, text="Process can finish if Need ≤ Work     →     Work = Work + Allocation",
+                 font=F(10), fg=MUTED, bg=WHITE).pack(anchor="w")
 
         # CHANGED: column widths slightly bigger so the larger font is not cut off
         f2, self.tree2 = make_tree(rb, [
@@ -106,14 +135,54 @@ class SimPage(Page):
             ("proc", "Process Selected", 165, True),
             ("rel", "Allocation Released", 180, True),
             ("wa", "Work After", 135, True),
-        ], 6)
+        ], 4)
         f2.pack(fill="both", expand=True, pady=(4, 8))
 
-        self.banner = tk.Label(rb, text="Press Solve or Step-by-Step to check the system.",
-                               font=F(12, True), bg=LIGHT, pady=9)
-        self.banner.pack(fill="x")
-
         self.build(4, 3)
+
+    # ---------------- scrolling helpers for the input area
+    def _fit_inner(self, _e=None):
+        c, inner = self._in_canvas, self._inner
+        cw, ch = c.winfo_width(), c.winfo_height()
+        rw, rh = inner.winfo_reqwidth(), inner.winfo_reqheight()
+        w, h = max(cw, rw), max(ch, rh)
+        c.itemconfigure(self._in_win, width=w, height=h)
+        c.configure(scrollregion=(0, 0, w, h))
+        need_v, need_h = rh > ch + 1, rw > cw + 1
+        if need_v != self._vsb.winfo_ismapped():
+            self._vsb.grid() if need_v else self._vsb.grid_remove()
+        if need_h != self._hsb.winfo_ismapped():
+            self._hsb.grid() if need_h else self._hsb.grid_remove()
+
+    def _on_wheel(self, e):
+        try:
+            w = self.winfo_containing(e.x_root, e.y_root)
+        except (KeyError, tk.TclError):
+            return
+        while w is not None and w is not self._scroll_wrap:
+            w = w.master
+        if w is None or not self._vsb.winfo_ismapped():
+            return
+        self._in_canvas.yview_scroll(int(-e.delta / 120), "units")
+
+    def _see(self, e):
+        """Scroll so the focused entry (Tab key) is visible."""
+        w, c, inner = e.widget, self._in_canvas, self._inner
+        try:
+            y = w.winfo_rooty() - inner.winfo_rooty()
+            x = w.winfo_rootx() - inner.winfo_rootx()
+            ih, iw = max(inner.winfo_height(), 1), max(inner.winfo_width(), 1)
+            top, left = c.canvasy(0), c.canvasx(0)
+            if y < top:
+                c.yview_moveto(max(y - 4, 0) / ih)
+            elif y + w.winfo_height() > top + c.winfo_height():
+                c.yview_moveto((y + w.winfo_height() - c.winfo_height() + 4) / ih)
+            if x < left:
+                c.xview_moveto(max(x - 4, 0) / iw)
+            elif x + w.winfo_width() > left + c.winfo_width():
+                c.xview_moveto((x + w.winfo_width() - c.winfo_width() + 4) / iw)
+        except tk.TclError:
+            pass
 
     # ---------------- table building
     def build_clicked(self):
@@ -126,9 +195,11 @@ class SimPage(Page):
                                                    f"1-{self.MAX_R} resources.")
         self.build(n, m)
 
-    def _entry(self, parent, width=5, font_size=12):
+    def _entry(self, parent, width=5, font_size=12, scroll=False):
         e = tk.Entry(parent, width=width, justify="center", font=F(font_size), relief="flat", bg=WHITE,
                      highlightthickness=1, highlightbackground=BLACK, highlightcolor=HOT)
+        if scroll:
+            e.bind("<FocusIn>", self._see)
         return e
 
     def build(self, n, m):
@@ -147,7 +218,7 @@ class SimPage(Page):
         for j, name in enumerate(self.res_names):
             tf.grid_columnconfigure(j + 1, weight=1)
             tk.Label(tf, text=name, font=F(10, True), fg=MUTED, bg=WHITE).grid(row=0, column=j + 1, pady=(0, 2))
-            e = self._entry(tf, width=6, font_size=12)
+            e = self._entry(tf, width=6, font_size=12, scroll=True)
             e.grid(row=1, column=j + 1, padx=4, pady=2, ipady=6, sticky="ew")
             self.total_entries.append(e)
 
@@ -170,7 +241,7 @@ class SimPage(Page):
 
         pad_y = 6 if n <= 4 else 4
         ipad_y = 6 if n <= 4 else 4
-        box_w = 5 if m <= 3 else 4
+        box_w = 4
 
         self.alloc_entries, self.max_entries = [], []
         for i in range(n):
@@ -179,14 +250,18 @@ class SimPage(Page):
                      anchor="w").grid(row=i + 2, column=0, sticky="w")
             ar, mr = [], []
             for j in range(m):
-                a = self._entry(mf, width=box_w, font_size=12)
+                a = self._entry(mf, width=box_w, font_size=12, scroll=True)
                 a.grid(row=i + 2, column=j + 1, padx=3, pady=pad_y, ipady=ipad_y, sticky="ew")
-                x = self._entry(mf, width=box_w, font_size=12)
+                x = self._entry(mf, width=box_w, font_size=12, scroll=True)
                 x.grid(row=i + 2, column=m + 2 + j, padx=3, pady=pad_y, ipady=ipad_y, sticky="ew")
                 ar.append(a)
                 mr.append(x)
             self.alloc_entries.append(ar)
             self.max_entries.append(mr)
+        self._in_canvas.yview_moveto(0)
+        self._in_canvas.xview_moveto(0)
+        self.update_idletasks()
+        self._fit_inner()
         self.reset_output()
 
     @staticmethod
@@ -293,25 +368,28 @@ class SimPage(Page):
         steps = self.res["steps"]
         if k < len(steps):
             s = steps[k]
-            self.tree2.insert("", "end", tags=("ok",), values=(
+            iid = self.tree2.insert("", "end", tags=("ok",), values=(
                 k + 1,
                 fmt(s["work_before"]),
                 f"P{s['index']}",
                 fmt(s["allocation"]),
                 fmt(s["work_after"]),
             ))
+            self.tree2.see(iid)
+            self.tree1.see(self.rows1[s["index"]])
             # Update Finish from False -> True
             self.tree1.item(self.rows1[s["index"]], tags=("ok",))
             self.tree1.set(self.rows1[s["index"]], "f", "True")
         else:
             stuck = ", ".join(f"P{i}" for i in self.res["stuck"])
-            self.tree2.insert("", "end", tags=("bad",), values=(
+            iid = self.tree2.insert("", "end", tags=("bad",), values=(
                 "-",
                 fmt(self.res["final_work"]),
                 "Stuck: " + stuck,
                 "—",
                 fmt(self.res["final_work"]),
             ))
+            self.tree2.see(iid)
             for i in self.res["stuck"]:
                 self.tree1.item(self.rows1[i], tags=("bad",))
                 self.tree1.set(self.rows1[i], "f", "False")
