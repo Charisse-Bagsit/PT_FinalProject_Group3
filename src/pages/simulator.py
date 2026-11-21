@@ -77,7 +77,8 @@ class SimPage(Page):
         top = tk.Frame(rb, bg=WHITE)
         top.pack(fill="x")
         tk.Label(top, text="Need Matrix & Finish Status", font=F(14, True), fg=HOT, bg=WHITE).pack(side="left")
-        self.avail_lbl = tk.Label(top, text="Available: -", font=F(11, True), bg=WHITE)
+        # CHANGED: Available label 11 -> 13 (bigger, easier to read)
+        self.avail_lbl = tk.Label(top, text="Available: -", font=F(13, True), bg=WHITE)
         self.avail_lbl.pack(side="right")
 
         # Finish column (False initially -> True when completed, matching class discussion)
@@ -98,12 +99,13 @@ class SimPage(Page):
         RoundButton(top2, "Next Step  ▶", self.reveal_next, width=130, height=34, radius=12,
                     fill=LIGHT, font=F(10, True)).pack(side="right", padx=6)
 
+        # CHANGED: column widths slightly bigger so the larger font is not cut off
         f2, self.tree2 = make_tree(rb, [
-            ("iter", "Iteration", 90, False),
-            ("wb", "Work Before", 130, True),
-            ("proc", "Process Selected", 145, True),
-            ("rel", "Allocation Released", 155, True),
-            ("wa", "Work After", 130, True),
+            ("iter", "Iteration", 100, False),
+            ("wb", "Work Before", 135, True),
+            ("proc", "Process Selected", 165, True),
+            ("rel", "Allocation Released", 180, True),
+            ("wa", "Work After", 135, True),
         ], 6)
         f2.pack(fill="both", expand=True, pady=(4, 8))
 

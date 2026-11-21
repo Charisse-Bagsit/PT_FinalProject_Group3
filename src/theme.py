@@ -142,9 +142,9 @@ def setup_styles():
     style = ttk.Style()
     style.theme_use("clam")
     style.configure("Treeview", background=WHITE, fieldbackground=WHITE, foreground=BLACK,
-                    rowheight=26, font=F(10), bordercolor=BLACK, borderwidth=1)
+                    rowheight=32, font=F(12), bordercolor=BLACK, borderwidth=1)
     style.configure("Treeview.Heading", background=LIGHT, foreground=BLACK,
-                    font=F(10, True), relief="flat", borderwidth=1, bordercolor=BLACK)
+                    font=F(12, True), relief="flat", borderwidth=1, bordercolor=BLACK)
     style.map("Treeview.Heading", background=[("active", LIGHT)])
     style.configure("Pink.Horizontal.TProgressbar", troughcolor=WHITE, background=HOT,
                     bordercolor=BLACK, lightcolor=HOT, darkcolor=HOT, thickness=18)
