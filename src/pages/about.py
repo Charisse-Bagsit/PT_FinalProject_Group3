@@ -4,7 +4,7 @@ pages/about.py  -  About Us (Mission, Vision, Purpose with deep indigo tinted ba
 import os
 import tkinter as tk
 from PIL import Image, ImageTk, ImageDraw
-from theme import BG, PINK, HOT, LIGHT, SOFT, WHITE, BLACK, MUTED, F, Card, round_rect
+from theme import BG, PINK, HOT, LIGHT, SOFT, WHITE, BLACK, MUTED, F, F_HEADING, F_BODY, Card, round_rect
 from pages.base import Page
 
 
@@ -41,7 +41,7 @@ class AboutPage(Page):
             text="This Banker's Algorithm Simulator was built to help students understand how an "
                  "operating system avoids deadlock. It shows the background, the formulas, and a "
                  "step-by-step safety check you can try with your own data.",
-            font=F(10), fg=BLACK, bg=BG, justify="center", wraplength=780
+            font=F_BODY(10), fg=BLACK, bg=BG, justify="center", wraplength=780
         )
         intro.pack(pady=(2, 16))
 
@@ -62,7 +62,7 @@ class AboutPage(Page):
         team_card = Card(self, height=130, width=10, pad=16)
         team_card.pack(fill="x", padx=36, pady=(20, 12))
 
-        tk.Label(team_card.body, text="Developed By", font=F(14, True), fg=HOT, bg=WHITE).pack(anchor="center", pady=(0, 10))
+        tk.Label(team_card.body, text="Developed By", font=F_HEADING(15), fg=HOT, bg=WHITE).pack(anchor="center", pady=(0, 10))
 
         pills = tk.Frame(team_card.body, bg=WHITE)
         pills.pack(anchor="center")
@@ -111,8 +111,8 @@ class AboutPage(Page):
                 round_rect(canvas, 2, 2, w - 2, h - 2, 18, fill="", outline=BLACK, width=2)
 
             # Centered Title (Soft Periwinkle) & Description (Pure White)
-            canvas.create_text(w / 2, h * 0.36, text=title, font=F(17, True), fill="#C7D2FE")
-            canvas.create_text(w / 2, h * 0.49, anchor="n", text=desc, font=F(10, True),
+            canvas.create_text(w / 2, h * 0.36, text=title, font=F_HEADING(16), fill="#C7D2FE")
+            canvas.create_text(w / 2, h * 0.49, anchor="n", text=desc, font=F_BODY(10),
                                fill=WHITE, width=w - 48, justify="center")
 
         canvas.bind("<Configure>", redraw)

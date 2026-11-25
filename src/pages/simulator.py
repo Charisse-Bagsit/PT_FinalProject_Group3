@@ -7,7 +7,7 @@ from tkinter import ttk, messagebox
 
 import banker_logic as banker
 from banker_logic import fmt
-from theme import BG, HOT, LIGHT, WHITE, BLACK, GREEN, RED, MUTED, F, RoundButton, Card, make_tree
+from theme import BG, HOT, LIGHT, WHITE, BLACK, GREEN, RED, MUTED, F, F_TITLE, F_HEADING, F_BODY, RoundButton, Card, make_tree
 from pages.base import Page
 
 
@@ -29,8 +29,8 @@ class SimPage(Page):
         head.grid(row=0, column=0, columnspan=2, sticky="ew", padx=24, pady=(12, 6))
         left = tk.Frame(head, bg=BG)
         left.pack(side="left")
-        tk.Label(left, text="Safety Simulator", font=F(22, True), bg=BG).pack(anchor="w")
-        tk.Label(left, text="Enter the system state, then check if it is safe", font=F(11),
+        tk.Label(left, text="Safety Simulator", font=F_TITLE(22), bg=BG).pack(anchor="w")
+        tk.Label(left, text="Enter the system state, then check if it is safe", font=F_BODY(11),
                  bg=BG).pack(anchor="w")
         RoundButton(head, "Resource Request", self.open_request, width=170, height=44).pack(side="right")
         RoundButton(head, "Clear", self.clear, width=90, height=44).pack(side="right", padx=8)
@@ -43,7 +43,7 @@ class SimPage(Page):
         lc.grid_propagate(False)
         b = lc.body
 
-        tk.Label(b, text="System Input", font=F(16, True), fg=HOT, bg=WHITE).pack(anchor="w", pady=(0, 4))
+        tk.Label(b, text="System Input", font=F_HEADING(15), fg=HOT, bg=WHITE).pack(anchor="w", pady=(0, 4))
 
         ctl = tk.Frame(b, bg=WHITE)
         ctl.pack(fill="x", pady=(4, 10))
@@ -96,12 +96,12 @@ class SimPage(Page):
         rb = rc.body
         top = tk.Frame(rb, bg=WHITE)
         top.pack(fill="x")
-        tk.Label(top, text="Need Matrix & Finish Status", font=F(14, True), fg=HOT, bg=WHITE).pack(side="left")
+        tk.Label(top, text="Need Matrix & Finish Status", font=F_HEADING(14), fg=HOT, bg=WHITE).pack(side="left")
         # CHANGED: Available label 11 -> 13 (bigger, easier to read)
         self.avail_lbl = tk.Label(top, text="Available: -", font=F(13, True), bg=WHITE)
         self.avail_lbl.pack(side="right")
         tk.Label(rb, text="Need = Max − Allocation     |     Available = Total Resources − Sum of Allocation",
-                 font=F(10), fg=MUTED, bg=WHITE).pack(anchor="w")
+                 font=F_BODY(10), fg=MUTED, bg=WHITE).pack(anchor="w")
 
         # Finish column (False initially -> True when completed, matching class discussion)
         f1, self.tree1 = make_tree(rb, [
@@ -120,13 +120,13 @@ class SimPage(Page):
 
         top2 = tk.Frame(rb, bg=WHITE)
         top2.pack(fill="x", pady=(6, 0))
-        tk.Label(top2, text="Safety Check Steps", font=F(14, True), fg=HOT, bg=WHITE).pack(side="left")
+        tk.Label(top2, text="Safety Check Steps", font=F_HEADING(14), fg=HOT, bg=WHITE).pack(side="left")
         RoundButton(top2, "Show All", self.reveal_all, width=100, height=34, radius=12,
                     font=F(10, True)).pack(side="right")
         RoundButton(top2, "Next Step  ▶", self.reveal_next, width=130, height=34, radius=12,
                     fill=LIGHT, font=F(10, True)).pack(side="right", padx=6)
         tk.Label(rb, text="Process can finish if Need ≤ Work     →     Work = Work + Allocation",
-                 font=F(10), fg=MUTED, bg=WHITE).pack(anchor="w")
+                 font=F_BODY(10), fg=MUTED, bg=WHITE).pack(anchor="w")
 
         # CHANGED: column widths slightly bigger so the larger font is not cut off
         f2, self.tree2 = make_tree(rb, [
@@ -436,16 +436,16 @@ class RequestDialog(tk.Toplevel):
         self.resizable(False, False)
         self.transient(sim.app)
 
-        tk.Label(self, text="Resource Request", font=F(20, True), fg=HOT, bg=WHITE).pack(anchor="w")
+        tk.Label(self, text="Resource Request", font=F_HEADING(18), fg=HOT, bg=WHITE).pack(anchor="w")
         tk.Label(self, text="Can this process be given extra resources and still stay safe?",
-                 font=F(10), fg=MUTED, bg=WHITE).pack(anchor="w", pady=(0, 10))
+                 font=F_BODY(10), fg=MUTED, bg=WHITE).pack(anchor="w", pady=(0, 10))
 
         tk.Label(self, text="Process", font=F(10, True), bg=WHITE).pack(anchor="w")
         self.proc = ttk.Combobox(self, values=[f"P{i}" for i in range(len(alloc))],
                                  state="readonly", width=10, font=F(11))
         self.proc.pack(anchor="w", pady=(2, 4))
         self.proc.bind("<<ComboboxSelected>>", self.update_hint)
-        self.hint = tk.Label(self, text="", font=F(10), fg=MUTED, bg=WHITE, justify="left")
+        self.hint = tk.Label(self, text="", font=F_BODY(10), fg=MUTED, bg=WHITE, justify="left")
         self.hint.pack(anchor="w", pady=(0, 8))
 
         tk.Label(self, text="Request", font=F(10, True), bg=WHITE).pack(anchor="w")

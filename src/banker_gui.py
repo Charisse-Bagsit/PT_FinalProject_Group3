@@ -12,7 +12,7 @@ Project layout  (inside src/)
 Flow:  Home -> Background -> How It Works -> Simulator -> Dashboard      (i) About
 """
 import tkinter as tk
-from theme import BG, PINK, WHITE, BLACK, F, round_rect, RoundButton, setup_styles
+from theme import BG, PINK, WHITE, BLACK, F, F_LOGO, F_NAV, round_rect, RoundButton, setup_styles
 from pages.home import HomePage
 from pages.background import BackgroundPage
 from pages.how import HowPage
@@ -49,9 +49,9 @@ class NavBar(tk.Frame):
         # Left Brand Logo + Title
         logo = tk.Canvas(self, width=52, height=52, bg=BG, highlightthickness=0)
         round_rect(logo, 2, 2, 50, 50, 14, fill=PINK, outline=BLACK, width=2)
-        logo.create_text(26, 26, text="SD", font=F(15, True), fill=WHITE)
+        logo.create_text(26, 26, text="SD", font=F_LOGO(15), fill=WHITE)
         logo.pack(side="left", padx=(18, 10), pady=10)
-        tk.Label(self, text="Security D'Lock", font=F(15, True), fg=BLACK, bg=BG).pack(side="left")
+        tk.Label(self, text="Security D'Lock", font=F_LOGO(16), fg=BLACK, bg=BG).pack(side="left")
 
         # Centered Navigation Buttons
         nav_group = tk.Frame(self, bg=BG)
@@ -59,13 +59,13 @@ class NavBar(tk.Frame):
 
         self.buttons = {}
         for key, label in self.ITEMS:
-            b = RoundButton(nav_group, label, lambda k=key: on_nav(k), width=128, height=46)
+            b = RoundButton(nav_group, label, lambda k=key: on_nav(k), width=128, height=46, font=F_NAV(11))
             b.pack(side="left", padx=5)
             self.buttons[key] = b
 
         # Right About (i) Button
         info = RoundButton(self, "i", lambda: on_nav("about"), width=46, height=46,
-                           radius=14, font=F(16, True))
+                           radius=14, font=F_LOGO(16))
         info.pack(side="right", padx=18)
         self.buttons["about"] = info
 

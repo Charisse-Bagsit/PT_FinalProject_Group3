@@ -4,7 +4,7 @@ pages/how.py  -  How It Works (4 steps with deep indigo tinted background pictur
 import os
 import tkinter as tk
 from PIL import Image, ImageTk, ImageDraw
-from theme import BG, PINK, HOT, LIGHT, SOFT, WHITE, BLACK, MUTED, F, RoundButton, Card, round_rect
+from theme import BG, PINK, HOT, LIGHT, SOFT, WHITE, BLACK, MUTED, F, F_HEADING, F_BODY, F_TABLE, RoundButton, Card, round_rect
 from pages.base import Page
 
 
@@ -46,10 +46,10 @@ class HowPage(Page):
             self._step_card(row, i, num, title, desc, img_path)
 
         # 2. Important Formulas Card (Custom Centered Two-Column Grid)
-        card = Card(self, height=225, width=10, pad=16)
+        card = Card(self, height=255, width=10, pad=16)
         card.pack(fill="x", padx=36, pady=(6, 8))
 
-        tk.Label(card.body, text="Important Formulas", font=F(15, True), fg=HOT, bg=WHITE).pack(anchor="center", pady=(0, 10))
+        tk.Label(card.body, text="Important Formulas", font=F_HEADING(15), fg=HOT, bg=WHITE).pack(anchor="center", pady=(0, 10))
 
         # Outer border frame ng table
         tbl_border = tk.Frame(card.body, bg="#CBD5E1", padx=1, pady=1)
@@ -72,7 +72,7 @@ class HowPage(Page):
                      pady=6, anchor="center", justify="center").grid(
                 row=r_idx, column=0, sticky="nsew", padx=(0, 1), pady=(0, bottom_pad)
             )
-            tk.Label(tbl_border, text=meaning, font=F(10), fg=BLACK, bg=row_bg,
+            tk.Label(tbl_border, text=meaning, font=F_TABLE(10), fg=BLACK, bg=row_bg,
                      pady=6, anchor="center", justify="center").grid(
                 row=r_idx, column=1, sticky="nsew", pady=(0, bottom_pad)
             )
@@ -123,8 +123,8 @@ class HowPage(Page):
             canvas.create_text(w / 2, 50, text=num, font=F(16, True), fill=PINK)
 
             # Title & Description
-            canvas.create_text(w / 2, 102, text=title, font=F(15, True), fill="#C7D2FE")
-            canvas.create_text(w / 2, 130, anchor="n", text=desc, font=F(10, True),
+            canvas.create_text(w / 2, 102, text=title, font=F_HEADING(15), fill="#C7D2FE")
+            canvas.create_text(w / 2, 130, anchor="n", text=desc, font=F_BODY(10),
                                fill=WHITE, width=w - 36, justify="center")
 
         canvas.bind("<Configure>", redraw)

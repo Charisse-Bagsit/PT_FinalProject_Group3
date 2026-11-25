@@ -2,7 +2,7 @@
 pages/base.py  -  Parent class that every page inherits from.
 """
 import tkinter as tk
-from theme import BG, MUTED, F
+from theme import BG, MUTED, F_TITLE, F_SUBTITLE
 
 
 class Page(tk.Frame):
@@ -14,5 +14,5 @@ class Page(tk.Frame):
         pass
 
     def title_block(self, title, subtitle):
-        tk.Label(self, text=title, font=F(26, True), bg=BG).pack(pady=(16, 0))
-        tk.Label(self, text=subtitle, font=F(12, True), bg=BG, fg=MUTED).pack(pady=(0, 8))
+        tk.Label(self, text=title, font=F_TITLE(26), bg=BG).pack(pady=(16, 0))
+        tk.Label(self, text=subtitle, font=F_SUBTITLE(12), bg=BG, fg=MUTED).pack(pady=(0, 8))

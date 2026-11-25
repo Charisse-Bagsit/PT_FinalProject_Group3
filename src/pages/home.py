@@ -2,7 +2,7 @@
 pages/home.py  -  Home / hero page.
 """
 import tkinter as tk
-from theme import BG, PINK, HOT, LIGHT, SOFT, WHITE, BLACK, GREEN, F, round_rect, RoundButton
+from theme import BG, PINK, HOT, LIGHT, SOFT, WHITE, BLACK, GREEN, F, F_TITLE, F_HEADING, F_BODY, round_rect, RoundButton
 
 
 # ------------------------------------------------------------------ HOME
@@ -28,10 +28,10 @@ class HomePage(tk.Canvas):
 
         size = int(max(26, min(w / 26, h / 14)))
         # Ibinaba sa 0.33 * h para eksaktong naka-center at pantay sa card sa kanan
-        head = self.create_text(0.07 * w, 0.33 * h, anchor="nw", fill=WHITE, font=F(size, True),
+        head = self.create_text(0.07 * w, 0.33 * h, anchor="nw", fill=WHITE, font=F_TITLE(size),
                                 text="Security D'Lock")
         y = self.bbox(head)[3] + 16
-        sub = self.create_text(0.07 * w, y, anchor="nw", fill=WHITE, font=F(13),
+        sub = self.create_text(0.07 * w, y, anchor="nw", fill=WHITE, font=F_BODY(13),
                                width=0.38 * w,
                                text="A Banker's Algorithm simulator that checks whether a system "
                                     "is in a safe state and finds a safe sequence, so processes "
@@ -47,7 +47,7 @@ class HomePage(tk.Canvas):
         x2, y2 = x1 + cw, y1 + ch
         round_rect(self, x1 + 8, y1 + 10, x2 + 8, y2 + 10, 26, fill="#C7D2FE", outline="")
         round_rect(self, x1, y1, x2, y2, 26, fill=WHITE, outline=BLACK, width=2)
-        self.create_text(x1 + 24, y1 + 26, anchor="w", text="Safety check", font=F(14, True), fill=HOT)
+        self.create_text(x1 + 24, y1 + 26, anchor="w", text="Safety check", font=F_HEADING(14), fill=HOT)
         self.create_text(x2 - 24, y1 + 26, anchor="e", text="Work = (3, 2, 3)", font=F(11, True), fill=BLACK)
         rows = [("P0", "3 2 1"), ("P1", "1 1 2"), ("P2", "3 1 1"), ("P3", "2 1 1")]
         for i, (p, need) in enumerate(rows):
@@ -55,7 +55,7 @@ class HomePage(tk.Canvas):
             round_rect(self, x1 + 20, ry, x2 - 20, ry + 40, 12, fill=SOFT, outline="")
             round_rect(self, x1 + 28, ry + 6, x1 + 76, ry + 34, 10, fill=LIGHT, outline=BLACK)
             self.create_text(x1 + 52, ry + 20, text=p, font=F(11, True), fill=BLACK)
-            self.create_text(x1 + 96, ry + 20, anchor="w", text="Need  " + need, font=F(11), fill=BLACK)
+            self.create_text(x1 + 96, ry + 20, anchor="w", text="Need  " + need, font=F_BODY(11), fill=BLACK)
             self.create_oval(x2 - 58, ry + 8, x2 - 32, ry + 34, fill=GREEN, outline="")
             self.create_text(x2 - 45, ry + 21, text="✓", fill=WHITE, font=F(12, True))
         round_rect(self, x1 + 20, y2 - 58, x2 - 20, y2 - 16, 18, fill=GREEN, outline=BLACK, width=2)

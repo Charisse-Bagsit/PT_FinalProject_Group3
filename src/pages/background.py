@@ -4,7 +4,7 @@ pages/background.py  -  Background of the Banker's Algorithm + Deep Indigo Tinte
 import os
 import tkinter as tk
 from PIL import Image, ImageTk, ImageDraw
-from theme import BG, PINK, HOT, LIGHT, SOFT, WHITE, BLACK, MUTED, F, RoundButton, Card, round_rect
+from theme import BG, PINK, HOT, LIGHT, SOFT, WHITE, BLACK, MUTED, F, F_HEADING, F_BODY, F_TABLE, RoundButton, Card, round_rect
 from pages.base import Page
 
 
@@ -43,7 +43,7 @@ class BackgroundPage(Page):
                  "Before an operating system gives resources to a process, it checks whether the system "
                  "would still be in a safe state afterwards. If every process can still finish in some "
                  "order, the request is safe. If not, the process must wait.",
-            font=F(10), fg=BLACK, bg=BG, justify="center", wraplength=820
+            font=F_BODY(10), fg=BLACK, bg=BG, justify="center", wraplength=820
         )
         intro.pack(pady=(2, 10))
 
@@ -64,18 +64,21 @@ class BackgroundPage(Page):
         card = Card(self, height=265, width=10, pad=16)
         card.pack(fill="x", padx=36, pady=(10, 6))
 
-        tk.Label(card.body, text="Key Terms", font=F(15, True), fg=HOT, bg=WHITE).pack(anchor="center", pady=(0, 8))
+        tk.Label(card.body, text="Key Terms", font=F_HEADING(15), fg=HOT, bg=WHITE).pack(anchor="center", pady=(0, 8))
 
+        # Outer border frame ng table
         tbl_border = tk.Frame(card.body, bg="#CBD5E1", padx=1, pady=1)
         tbl_border.pack(fill="x")
         tbl_border.grid_columnconfigure(0, weight=1, uniform="kt_cols")
         tbl_border.grid_columnconfigure(1, weight=1, uniform="kt_cols")
 
+        # Table Header (Two Columns, Centered)
         tk.Label(tbl_border, text="Term", font=F(10, True), fg=BLACK, bg=LIGHT,
                  pady=6, anchor="center", justify="center").grid(row=0, column=0, sticky="nsew", padx=(0, 1), pady=(0, 1))
         tk.Label(tbl_border, text="Meaning", font=F(10, True), fg=BLACK, bg=LIGHT,
                  pady=6, anchor="center", justify="center").grid(row=0, column=1, sticky="nsew", pady=(0, 1))
 
+        # Table Rows (Lahat ng 6 terms kita, may vertical divider, at naka-center)
         for r_idx, (term, meaning) in enumerate(self.TERMS, start=1):
             row_bg = WHITE if r_idx % 2 == 1 else SOFT
             bottom_pad = 0 if r_idx == len(self.TERMS) else 1
@@ -84,7 +87,7 @@ class BackgroundPage(Page):
                      pady=5, anchor="center", justify="center").grid(
                 row=r_idx, column=0, sticky="nsew", padx=(0, 1), pady=(0, bottom_pad)
             )
-            tk.Label(tbl_border, text=meaning, font=F(10), fg=BLACK, bg=row_bg,
+            tk.Label(tbl_border, text=meaning, font=F_TABLE(10), fg=BLACK, bg=row_bg,
                      pady=5, anchor="center", justify="center").grid(
                 row=r_idx, column=1, sticky="nsew", pady=(0, bottom_pad)
             )
@@ -129,9 +132,8 @@ class BackgroundPage(Page):
                 canvas.create_image(w / 2, h / 2, image=photo)
                 round_rect(canvas, 2, 2, w - 2, h - 2, 18, fill="", outline=BLACK, width=2)
 
-            # Centered Title (Soft Periwinkle) & Description (Pure White)
-            canvas.create_text(w / 2, h * 0.34, text=title, font=F(16, True), fill="#C7D2FE")
-            canvas.create_text(w / 2, h * 0.47, anchor="n", text=desc, font=F(10, True),
+            canvas.create_text(w / 2, h * 0.34, text=title, font=F_HEADING(15), fill="#C7D2FE")
+            canvas.create_text(w / 2, h * 0.47, anchor="n", text=desc, font=F_BODY(10),
                                fill=WHITE, width=w - 44, justify="center")
 
         canvas.bind("<Configure>", redraw)
