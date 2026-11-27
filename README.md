@@ -1,4 +1,7 @@
-# 🔐 Security D’Lock
+<div align="center">
+
+<img src="docs/screenshots/banner.png" alt="Security D'Lock Logo" width="380"/>
+
 ### Interactive Banker’s Algorithm & Deadlock Avoidance Simulator
 
 ![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)
@@ -6,7 +9,9 @@
 ![Course](https://img.shields.io/badge/PT%20101-Platform%20Technologies-1E1B4B?style=for-the-badge)
 ![University](https://img.shields.io/badge/BatStateU-CICS-991B1B?style=for-the-badge)
 
-> *A desktop simulation tool built for **PT 101 – Platform Technologies** that visualizes how operating systems allocate finite resources safely and prevent deadlocks using Edsger Dijkstra’s Banker’s Algorithm.*
+*A desktop simulation tool built for **PT 101 – Platform Technologies** that visualizes how operating systems allocate finite resources safely and prevent deadlocks using Edsger Dijkstra’s Banker’s Algorithm.*
+
+</div>
 
 ---
 
@@ -31,6 +36,7 @@ In multiprogramming operating systems, competing processes can enter a **deadloc
 PT_FinalProject_Group3/
 ├── docs/
 │   └── screenshots/
+│       ├── banner.png
 │       ├── tc1_1_safe_state_5x4_simulator.png
 │       ├── tc1_2_safe_state_5x4_dashboard.png
 │       ├── tc2_1_unsafe_state_3x2_simulator.png
@@ -97,9 +103,9 @@ The simulator was validated across multiple matrix dimensions and algorithm scen
 * **Expected Result:** `Available = (2, 1, 0, 0)` → **SAFE STATE** (`Sequence: P0 → P3 → P4 → P1 → P2`)
 * **Actual Result:** **PASSED**
 
-| Safety Simulator Output | Dashboard Analytics |
+| Expected Output | Security D'Lock Result |
 | :---: | :---: |
-| ![TC1 Simulator](docs/screenshots/tc1_1_safe_state_5x4_simulator.png) | ![TC1 Dashboard](docs/screenshots/tc1_2_safe_state_5x4_dashboard.png) |
+| ![TC1 Expected Output](docs/screenshots/tc1_1_safe_state_5x4_simulator.png) | ![TC1 Security D'Lock Result](docs/screenshots/tc1_2_safe_state_5x4_dashboard.png) |
 
 ---
 
@@ -108,9 +114,9 @@ The simulator was validated across multiple matrix dimensions and algorithm scen
 * **Expected Result:** `Available = (0, 1)` → **UNSAFE STATE** (`Stuck: P0, P1, P2`)
 * **Actual Result:** **PASSED**
 
-| Safety Simulator Output | Dashboard Analytics |
+| Expected Output | Security D'Lock Result |
 | :---: | :---: |
-| ![TC2 Simulator](docs/screenshots/tc2_1_unsafe_state_3x2_simulator.png) | ![TC2 Dashboard](docs/screenshots/tc2_2_unsafe_state_3x2_dashboard.png) |
+| ![TC2 Expected Output](docs/screenshots/tc2_1_unsafe_state_3x2_simulator.png) | ![TC2 Security D'Lock Result](docs/screenshots/tc2_2_unsafe_state_3x2_dashboard.png) |
 
 ---
 
@@ -119,9 +125,9 @@ The simulator was validated across multiple matrix dimensions and algorithm scen
 * **Expected Result:** `Request ≤ Need` & `Request ≤ Available` → **REQUEST GRANTED** (`Sequence: P1 → P3 → P0 → P2`)
 * **Actual Result:** **PASSED**
 
-| Resource Request Pop-Up | Updated Safety Simulator |
+| Expected Output | Security D'Lock Result |
 | :---: | :---: |
-| ![TC3 Popup](docs/screenshots/tc3_1_resource_request_4x3_popup.png) | ![TC3 Updated](docs/screenshots/tc3_2_resource_request_4x3_updated.png) |
+| ![TC3 Expected Output](docs/screenshots/tc3_1_resource_request_4x3_popup.png) | ![TC3 Security D'Lock Result](docs/screenshots/tc3_2_resource_request_4x3_updated.png) |
 
 ---
 
