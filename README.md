@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="src/images/sd_banner.jpg" alt="Security D'Lock Logo" width="380"/>
+<img src="src/images/sd_banner.jpg" alt="Security D'Lock Banner" width="520"/>
 
 ### Interactive Banker’s Algorithm & Deadlock Avoidance Simulator
 
@@ -26,7 +26,7 @@ In multiprogramming operating systems, competing processes can enter a **deadloc
   * **Step-by-Step Trace:** Reveals each iteration one process at a time (`Next Step ▶`), updating `Work` vectors and process `Finish` states live.
 * **Resource Request Simulator:** Evaluates whether an incoming resource request satisfies `Request ≤ Need` and `Request ≤ Available`, tests the tentative state for safety, and applies approved requests directly to the table.
 * **Visual Analytics Dashboard:** Summarizes resource utilization, per-process allocation vs. remaining need, and system safety status.
-* **Built-In Learning Modules:** Includes dedicated **Background**, **How It Works**, and **About** pages for guided classroom walkthroughs.
+* **Built-In Learning Modules:** Includes dedicated **Background**, **How It Works**, and **About** pages with visual diagrams for guided classroom walkthroughs.
 
 ---
 
@@ -34,27 +34,48 @@ In multiprogramming operating systems, competing processes can enter a **deadloc
 
 ```text
 PT_FinalProject_Group3/
+├── .vscode/
+│   └── settings.json
 ├── docs/
-│   └── screenshots/
-│       ├── banner.png
-│       ├── tc1_1_safe_state_5x4_simulator.png
-│       ├── tc1_2_safe_state_5x4_dashboard.png
-│       ├── tc2_1_unsafe_state_3x2_simulator.png
-│       ├── tc2_2_unsafe_state_3x2_dashboard.png
-│       ├── tc3_1_resource_request_4x3_popup.png
-│       └── tc3_2_resource_request_4x3_updated.png
+│   ├── screenshots/
+│   │   ├── tc1_1_safe_state_5x4_simulator.png
+│   │   ├── tc1_2_safe_state_5x4_dashboard.png
+│   │   ├── tc2_1_unsafe_state_3x2_simulator.png
+│   │   ├── tc2_2_unsafe_state_3x2_dashboard.png
+│   │   ├── tc3_1_resource_request_4x3_popup.png
+│   │   └── tc3_2_resource_request_4x3_updated.png
+│   ├── TESTING EVIDENCE.pdf
+│   └── USER GUIDE.pdf
 ├── src/
-│   ├── main.py              # Application entry point & navigation controller
-│   ├── banker_logic.py      # Core Banker's Algorithm (Need, Available, Safety & Request checks)
-│   ├── theme.py             # Custom UI components, color palette, and typography
-│   └── pages/
-│       ├── base.py          # Base page template
-│       ├── home.py          # Landing page
-│       ├── background.py    # Deadlock & Banker's Algorithm concepts
-│       ├── how_it_works.py  # Step-by-step formula & algorithm guide
-│       ├── simulator.py     # Main Safety Simulator & Resource Request dialog
-│       ├── dashboard.py     # Summary metrics & visual charts
-│       └── about.py         # Project & team information
+│   ├── images/
+│   │   ├── About1.jpg
+│   │   ├── About2.jpg
+│   │   ├── About3.jpg
+│   │   ├── Bg1.jpg
+│   │   ├── Bg2.jpg
+│   │   ├── Bg3.jpg
+│   │   ├── Step1.jpg
+│   │   ├── Step2.jpg
+│   │   ├── Step3.jpg
+│   │   ├── Step4.jpg
+│   │   └── sd_banner.jpg
+│   ├── pages/
+│   │   ├── __init__.py
+│   │   ├── about.py           # Project & team information
+│   │   ├── background.py      # Deadlock & Banker's Algorithm concepts
+│   │   ├── base.py            # Base page template
+│   │   ├── dashboard.py       # Summary metrics & visual charts
+│   │   ├── home.py            # Landing page
+│   │   ├── how.py             # Step-by-step formula & algorithm guide
+│   │   └── simulator.py       # Main Safety Simulator & Resource Request dialog
+│   ├── banker_format.py       # Formatting helpers for matrices & vectors
+│   ├── banker_gui.py          # GUI helper widgets & layout utilities
+│   ├── banker_logic.py        # Core Banker's Algorithm (Need, Available, Safety & Request checks)
+│   ├── banker_models.py       # Data structures & system state models
+│   ├── main.py                # Application entry point & navigation controller
+│   ├── theme.py               # Custom UI components, color palette, and typography
+│   └── vector_utils.py        # Vector comparison and arithmetic operations
+├── .gitignore
 ├── Notes.txt
 └── README.md
 ```
@@ -64,7 +85,7 @@ PT_FinalProject_Group3/
 ## 🚀 Getting Started
 
 ### Prerequisites
-* **Python 3.10 or higher** (uses standard library `tkinter` and `ttk` — no external pip packages required).
+* **Python 3.10 or higher** (uses standard library `tkinter` and `ttk` — install `Pillow` if loading `.jpg` assets via `PIL`).
 
 ### Installation & Running the App
 1. **Clone the repository:**
@@ -72,15 +93,24 @@ PT_FinalProject_Group3/
    git clone [https://github.com/Charisse-Bagsit/PT_FinalProject_Group3.git](https://github.com/Charisse-Bagsit/PT_FinalProject_Group3.git)
    cd PT_FinalProject_Group3
    ```
-2. **Launch the simulator:**
+2. **Install Pillow (for image assets, if needed):**
+   ```bash
+   pip install pillow
+   ```
+3. **Launch the simulator:**
    ```bash
    python src/main.py
    ```
 
 ---
 
-## 📖 User Guide
+## 📖 User Guide & Documentation
 
+Complete project documentation is available inside the `docs/` folder:
+* 📄 **[User Guide (PDF)](docs/USER%20GUIDE.pdf)** — Full walkthrough of features, interface controls, and sample scenarios.
+* 📄 **[Testing Evidence (PDF)](docs/TESTING%20EVIDENCE.pdf)** — Detailed test cases, matrix computations, and validation results.
+
+### Quick Start Steps
 1. **Configure System Dimensions:** On the **Simulator** tab, set the number of **Processes (`1–10`)** and **Resources (`1–10`)**, then click **Build** *(or click **+ Load Sample** for a quick preset)*.
 2. **Enter Resource Vectors:**
    * **Total:** Total existing instances of each resource (`A, B, C, ...`).
