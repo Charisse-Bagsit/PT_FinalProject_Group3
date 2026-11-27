@@ -206,7 +206,7 @@ class SimPage(Page):
         for fr in (self.total_frame, self.matrix_frame):
             for w in fr.winfo_children():
                 w.destroy()
-        self.res_names = list("ABCDEFGHI")[:m]
+        self.res_names = list("ABCDEFGHIJ")[:m]
         self.n_var.set(n)
         self.m_var.set(m)
 
