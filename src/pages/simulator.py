@@ -13,7 +13,7 @@ from pages.base import Page
 
 # ------------------------------------------------------------------ SIMULATOR
 class SimPage(Page):
-    MAX_P, MAX_R = 6, 4
+    MAX_P, MAX_R = 10, 4
 
     def __init__(self, parent, app):
         super().__init__(parent, app)
