@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/screenshots/banner.png" alt="Security D'Lock Logo" width="380"/>
+<img src="docs/screenshots/sd_banner.jpg" alt="Security D'Lock Logo" width="380"/>
 
 ### Interactive Banker’s Algorithm & Deadlock Avoidance Simulator
 
