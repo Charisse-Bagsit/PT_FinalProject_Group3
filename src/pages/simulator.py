@@ -84,6 +84,7 @@ class SimPage(Page):
         self._inner.bind("<Configure>", self._fit_inner)
         self._in_canvas.bind("<Configure>", self._fit_inner)
         self.bind_all("<MouseWheel>", self._on_wheel, add="+")
+        self.bind_all("<Shift-MouseWheel>", self._on_shift_wheel, add="+")
 
         self.total_frame = tk.Frame(self._inner, bg=WHITE)
         self.total_frame.pack(fill="x", pady=(6, 8))
@@ -97,13 +98,11 @@ class SimPage(Page):
         top = tk.Frame(rb, bg=WHITE)
         top.pack(fill="x")
         tk.Label(top, text="Need Matrix & Finish Status", font=F_HEADING(14), fg=HOT, bg=WHITE).pack(side="left")
-        # CHANGED: Available label 11 -> 13 (bigger, easier to read)
         self.avail_lbl = tk.Label(top, text="Available: -", font=F(13, True), bg=WHITE)
         self.avail_lbl.pack(side="right")
         tk.Label(rb, text="Need = Max − Allocation     |     Available = Total Resources − Sum of Allocation",
                  font=F_BODY(10), fg=MUTED, bg=WHITE).pack(anchor="w")
 
-        # Finish column (False initially -> True when completed, matching class discussion)
         f1, self.tree1 = make_tree(rb, [
             ("p", "Process", 80, False),
             ("a", "Allocation", 120, True),
@@ -128,7 +127,6 @@ class SimPage(Page):
         tk.Label(rb, text="Process can finish if Need ≤ Work     →     Work = Work + Allocation",
                  font=F_BODY(10), fg=MUTED, bg=WHITE).pack(anchor="w")
 
-        # CHANGED: column widths slightly bigger so the larger font is not cut off
         f2, self.tree2 = make_tree(rb, [
             ("iter", "Iteration", 100, False),
             ("wb", "Work Before", 135, True),
@@ -164,6 +162,17 @@ class SimPage(Page):
         if w is None or not self._vsb.winfo_ismapped():
             return
         self._in_canvas.yview_scroll(int(-e.delta / 120), "units")
+
+    def _on_shift_wheel(self, e):
+        try:
+            w = self.winfo_containing(e.x_root, e.y_root)
+        except (KeyError, tk.TclError):
+            return
+        while w is not None and w is not self._scroll_wrap:
+            w = w.master
+        if w is None or not self._hsb.winfo_ismapped():
+            return
+        self._in_canvas.xview_scroll(int(-e.delta / 120), "units")
 
     def _see(self, e):
         """Scroll so the focused entry (Tab key) is visible."""
@@ -210,54 +219,96 @@ class SimPage(Page):
         self.n_var.set(n)
         self.m_var.set(m)
 
+        # Compact sizing when > 4 resources so all A-J columns fit cleanly without clipping
+        compact = m > 4
+        box_w = 2 if m >= 8 else (3 if compact else 4)
+        tot_w = 2 if m >= 8 else (3 if compact else 6)
+        font_sz = 10 if m >= 7 else (11 if compact else 12)
+        pad_x = 2 if compact else 3
+        pad_y = 3 if (n > 4 or compact) else 6
+        ipad_y = 3 if (n > 4 or compact) else 6
+
         # ---- Total row
         tf = self.total_frame
-        tk.Label(tf, text="Total", font=F(11, True), bg=WHITE,
-                 width=6, anchor="w").grid(row=0, column=0, rowspan=2, sticky="w")
+        tf.grid_columnconfigure(0, minsize=46 if compact else 54)
+        tk.Label(tf, text="Total", font=F(10 if compact else 11, True), bg=WHITE,
+                 anchor="w").grid(row=0, column=0, rowspan=2, sticky="w")
         self.total_entries = []
         for j, name in enumerate(self.res_names):
             tf.grid_columnconfigure(j + 1, weight=1)
-            tk.Label(tf, text=name, font=F(10, True), fg=MUTED, bg=WHITE).grid(row=0, column=j + 1, pady=(0, 2))
-            e = self._entry(tf, width=6, font_size=12, scroll=True)
-            e.grid(row=1, column=j + 1, padx=4, pady=2, ipady=6, sticky="ew")
+            tk.Label(tf, text=name, font=F(9 if compact else 10, True), fg=MUTED, bg=WHITE).grid(
+                row=0, column=j + 1, pady=(0, 2))
+            e = self._entry(tf, width=tot_w, font_size=font_sz, scroll=True)
+            e.grid(row=1, column=j + 1, padx=pad_x, pady=2, ipady=ipad_y, sticky="ew")
             self.total_entries.append(e)
 
         # ---- Allocation & Max matrices
         mf = self.matrix_frame
-        mf.grid_columnconfigure(0, minsize=52)
-        for j in range(m):
-            mf.grid_columnconfigure(j + 1, weight=1)
-            mf.grid_columnconfigure(m + 2 + j, weight=1)
-        mf.grid_columnconfigure(m + 1, minsize=18)
+        self.alloc_entries = [[None] * m for _ in range(n)]
+        self.max_entries = [[None] * m for _ in range(n)]
 
-        tk.Label(mf, text="Allocation", font=F(11, True), bg=WHITE).grid(
-            row=0, column=1, columnspan=m, pady=(2, 2))
-        tk.Label(mf, text="Max", font=F(11, True), bg=WHITE).grid(
-            row=0, column=m + 2, columnspan=m, pady=(2, 2))
-
-        for j, name in enumerate(self.res_names):
-            tk.Label(mf, text=name, font=F(10, True), fg=MUTED, bg=WHITE).grid(row=1, column=j + 1, pady=(0, 4))
-            tk.Label(mf, text=name, font=F(10, True), fg=MUTED, bg=WHITE).grid(row=1, column=m + 2 + j, pady=(0, 4))
-
-        pad_y = 6 if n <= 4 else 4
-        ipad_y = 6 if n <= 4 else 4
-        box_w = 4
-
-        self.alloc_entries, self.max_entries = [], []
-        for i in range(n):
-            mf.grid_rowconfigure(i + 2, weight=1)
-            tk.Label(mf, text=f"P{i}", font=F(11, True), bg=WHITE,
-                     anchor="w").grid(row=i + 2, column=0, sticky="w")
-            ar, mr = [], []
+        if not compact:
+            # Side-by-side layout for 1 to 4 resources
+            mf.grid_columnconfigure(0, minsize=52)
             for j in range(m):
-                a = self._entry(mf, width=box_w, font_size=12, scroll=True)
-                a.grid(row=i + 2, column=j + 1, padx=3, pady=pad_y, ipady=ipad_y, sticky="ew")
-                x = self._entry(mf, width=box_w, font_size=12, scroll=True)
-                x.grid(row=i + 2, column=m + 2 + j, padx=3, pady=pad_y, ipady=ipad_y, sticky="ew")
-                ar.append(a)
-                mr.append(x)
-            self.alloc_entries.append(ar)
-            self.max_entries.append(mr)
+                mf.grid_columnconfigure(j + 1, weight=1)
+                mf.grid_columnconfigure(m + 2 + j, weight=1)
+            mf.grid_columnconfigure(m + 1, minsize=18)
+
+            tk.Label(mf, text="Allocation", font=F(11, True), bg=WHITE).grid(
+                row=0, column=1, columnspan=m, pady=(2, 2))
+            tk.Label(mf, text="Max", font=F(11, True), bg=WHITE).grid(
+                row=0, column=m + 2, columnspan=m, pady=(2, 2))
+
+            for j, name in enumerate(self.res_names):
+                tk.Label(mf, text=name, font=F(10, True), fg=MUTED, bg=WHITE).grid(row=1, column=j + 1, pady=(0, 4))
+                tk.Label(mf, text=name, font=F(10, True), fg=MUTED, bg=WHITE).grid(row=1, column=m + 2 + j, pady=(0, 4))
+
+            for i in range(n):
+                mf.grid_rowconfigure(i + 2, weight=1)
+                tk.Label(mf, text=f"P{i}", font=F(11, True), bg=WHITE,
+                         anchor="w").grid(row=i + 2, column=0, sticky="w")
+                for j in range(m):
+                    a = self._entry(mf, width=box_w, font_size=font_sz, scroll=True)
+                    a.grid(row=i + 2, column=j + 1, padx=pad_x, pady=pad_y, ipady=ipad_y, sticky="ew")
+                    x = self._entry(mf, width=box_w, font_size=font_sz, scroll=True)
+                    x.grid(row=i + 2, column=m + 2 + j, padx=pad_x, pady=pad_y, ipady=ipad_y, sticky="ew")
+                    self.alloc_entries[i][j] = a
+                    self.max_entries[i][j] = x
+        else:
+            # Stacked layout for 5 to 10 resources so all columns A..J are visible at once
+            mf.grid_columnconfigure(0, minsize=46)
+            for j in range(m):
+                mf.grid_columnconfigure(j + 1, weight=1)
+
+            # Section 1: Allocation
+            tk.Label(mf, text="Allocation Matrix", font=F(10, True), fg=HOT, bg=WHITE).grid(
+                row=0, column=1, columnspan=m, sticky="w", pady=(2, 2))
+            for j, name in enumerate(self.res_names):
+                tk.Label(mf, text=name, font=F(9, True), fg=MUTED, bg=WHITE).grid(row=1, column=j + 1, pady=(0, 2))
+            for i in range(n):
+                tk.Label(mf, text=f"P{i}", font=F(10, True), bg=WHITE, anchor="w").grid(
+                    row=i + 2, column=0, sticky="w")
+                for j in range(m):
+                    a = self._entry(mf, width=box_w, font_size=font_sz, scroll=True)
+                    a.grid(row=i + 2, column=j + 1, padx=pad_x, pady=pad_y, ipady=ipad_y, sticky="ew")
+                    self.alloc_entries[i][j] = a
+
+            # Section 2: Max (below Allocation)
+            max_start = n + 3
+            tk.Label(mf, text="Max Matrix", font=F(10, True), fg=HOT, bg=WHITE).grid(
+                row=max_start, column=1, columnspan=m, sticky="w", pady=(10, 2))
+            for j, name in enumerate(self.res_names):
+                tk.Label(mf, text=name, font=F(9, True), fg=MUTED, bg=WHITE).grid(
+                    row=max_start + 1, column=j + 1, pady=(0, 2))
+            for i in range(n):
+                tk.Label(mf, text=f"P{i}", font=F(10, True), bg=WHITE, anchor="w").grid(
+                    row=max_start + 2 + i, column=0, sticky="w")
+                for j in range(m):
+                    x = self._entry(mf, width=box_w, font_size=font_sz, scroll=True)
+                    x.grid(row=max_start + 2 + i, column=j + 1, padx=pad_x, pady=pad_y, ipady=ipad_y, sticky="ew")
+                    self.max_entries[i][j] = x
+
         self._in_canvas.yview_moveto(0)
         self._in_canvas.xview_moveto(0)
         self.update_idletasks()
@@ -342,7 +393,6 @@ class SimPage(Page):
         self.tree1.delete(*self.tree1.get_children())
         self.tree2.delete(*self.tree2.get_children())
         self.rows1 = []
-        # Initially: Finish = False for all processes
         for i in range(len(alloc)):
             self.rows1.append(self.tree1.insert("", "end", values=(
                 f"P{i}", fmt(alloc[i]), fmt(maxm[i]), fmt(need[i]), "False")))
@@ -377,7 +427,6 @@ class SimPage(Page):
             ))
             self.tree2.see(iid)
             self.tree1.see(self.rows1[s["index"]])
-            # Update Finish from False -> True
             self.tree1.item(self.rows1[s["index"]], tags=("ok",))
             self.tree1.set(self.rows1[s["index"]], "f", "True")
         else:
@@ -452,10 +501,11 @@ class RequestDialog(tk.Toplevel):
         row = tk.Frame(self, bg=WHITE)
         row.pack(anchor="w", pady=4)
         self.entries = []
+        req_w = 3 if len(sim.res_names) > 5 else 5
         for j, name in enumerate(sim.res_names):
             tk.Label(row, text=name, font=F(10), fg=MUTED, bg=WHITE).grid(row=0, column=j)
-            e = sim._entry(row, width=5, font_size=11)
-            e.grid(row=1, column=j, padx=4, ipady=4)
+            e = sim._entry(row, width=req_w, font_size=11)
+            e.grid(row=1, column=j, padx=3, ipady=4)
             e.insert(0, "0")
             self.entries.append(e)
 
